@@ -2,21 +2,109 @@
 name = "ai-novel-editor"
 version = "0.1.0"
 description = "AI-assisted novel writing editor with interactive world-building"
+readme = "README.md"
 requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "AI Novel Editor Team"}
+]
+keywords = ["ai", "novel", "writing", "editor", "gemini", "adk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Text Editors",
+    "Topic :: Artistic Software",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+# Core dependencies (required for basic functionality)
 dependencies = [
-    "google-genai>=0.3.0",
-    "pydantic>=2.0.0",
+    "pydantic>=2.0.0,<3.0.0",
     "python-dotenv>=1.0.0",
-    "streamlit>=1.30.0",
-    "streamlit-agraph>=0.0.45",
+    "streamlit>=1.30.0,<2.0.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=7.0.0,<8.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+]
+
+# Google AI integration
+ai = [
+    "google-genai>=0.3.0",
+    "google-generativeai>=0.3.0",
+]
+
+# Voice AI features
+voice = [
     "pyaudio>=0.2.14",
     "speechrecognition>=3.10.0",
     "pyttsx3>=2.90",
-    "sqlalchemy>=2.0.0",
-    "aiosqlite>=0.19.0",
-    "python-dateutil>=2.8.0",
 ]
 
+# Database backend
+database = [
+    "sqlalchemy>=2.0.0",
+    "aiosqlite>=0.19.0",
+]
+
+# Advanced visualization
+viz = [
+    "streamlit-agraph>=0.0.45",
+    "plotly>=5.0.0",
+    "networkx>=3.0",
+]
+
+# Export features
+export = [
+    "reportlab>=4.0.0",
+    "python-docx>=1.0.0",
+    "ebooklib>=0.18",
+]
+
+# All optional features
+all = [
+    "ai-novel-editor[dev,ai,voice,database,viz,export]",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/ai-novel-editor"
+Documentation = "https://github.com/yourusername/ai-novel-editor/blob/main/README.md"
+Repository = "https://github.com/yourusername/ai-novel-editor"
+Issues = "https://github.com/yourusername/ai-novel-editor/issues"
+
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

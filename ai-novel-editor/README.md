@@ -4,9 +4,20 @@ An AI-assisted text editor for novel writing built with Python and Google's Agen
 
 ## Features
 
+### ✨ NEW: Full AI Integration with Google Gemini
+
+All AI features are now **fully implemented and working**:
+- ✅ AI-powered text editing (improve, expand, rephrase)
+- ✅ AI chapter planning and suggestions
+- ✅ AI question generation for world-building
+- ✅ AI entity extraction from answers
+- ✅ Context-grounded in your story's "Truth"
+
+See [AI_FEATURES.md](AI_FEATURES.md) for complete documentation.
+
 ### Module 1: Project Manager & Story Inception
 - **Project Management**: Create, open, and manage multiple novel projects
-- **Interactive World-Building**: Voice-enabled AI Q&A to establish story foundations
+- **Interactive World-Building**: AI-powered Q&A to establish story foundations
 - **Dynamic Question Tree**: Branching questions based on user answers
   - Visual navigation of question structure
   - User-controlled navigation (jump between branches, go backwards)
@@ -64,12 +75,14 @@ An AI-assisted text editor for novel writing built with Python and Google's Agen
    GOOGLE_API_KEY=your_api_key_here
    ```
 
-## Getting Your Google AI API Key
+## Getting Your Google AI API Key (Required for AI Features)
 
 1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
 2. Sign in with your Google account
 3. Click "Create API Key"
 4. Copy the key and paste it into your `.env` file
+
+**Note**: The application works without an API key, but AI features (editing, suggestions, question generation) require it.
 
 ## Usage
 

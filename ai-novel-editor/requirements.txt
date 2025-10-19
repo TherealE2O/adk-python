@@ -1,23 +1,71 @@
-# Core dependencies
-google-genai>=0.3.0
-pydantic>=2.0.0
-python-dotenv>=1.0.0
+# ============================================================================
+# AI Novel Editor - Requirements
+# ============================================================================
+# This file lists all dependencies needed to run the AI Novel Editor.
+# Install with: pip install -r requirements.txt
+# ============================================================================
 
-# Web UI
-streamlit>=1.30.0
-streamlit-agraph>=0.0.45
+# Core Dependencies (Required)
+# ----------------------------------------------------------------------------
+pydantic>=2.0.0,<3.0.0          # Data validation and settings management
+python-dotenv>=1.0.0            # Environment variable management
 
-# Audio processing for voice AI
-pyaudio>=0.2.14
-speechrecognition>=3.10.0
-pyttsx3>=2.90
+# Web UI (Required)
+# ----------------------------------------------------------------------------
+streamlit>=1.30.0,<2.0.0        # Web application framework
 
-# Data storage
-sqlalchemy>=2.0.0
-aiosqlite>=0.19.0
+# Testing (Development)
+# ----------------------------------------------------------------------------
+pytest>=7.0.0,<8.0.0            # Testing framework
 
-# Utilities
-python-dateutil>=2.8.0
+# ============================================================================
+# Optional Dependencies (for future features)
+# ============================================================================
+# Uncomment the sections below when implementing these features:
 
-# Testing
-pytest>=7.0.0
+# Google AI Integration (for LLM-powered editing)
+# ----------------------------------------------------------------------------
+# google-genai>=0.3.0           # Google Gemini API client
+# google-generativeai>=0.3.0    # Alternative Google AI SDK
+
+# Advanced Visualization
+# ----------------------------------------------------------------------------
+# streamlit-agraph>=0.0.45      # Graph visualization for question tree
+# plotly>=5.0.0                 # Interactive charts
+# networkx>=3.0                 # Graph data structures
+
+# Voice AI Features
+# ----------------------------------------------------------------------------
+# pyaudio>=0.2.14               # Audio I/O
+# speechrecognition>=3.10.0     # Speech-to-text
+# pyttsx3>=2.90                 # Text-to-speech
+# google-cloud-speech>=2.0.0    # Google Cloud Speech API
+
+# Database Backend (for production/multi-user)
+# ----------------------------------------------------------------------------
+# sqlalchemy>=2.0.0             # SQL toolkit and ORM
+# aiosqlite>=0.19.0             # Async SQLite driver
+# psycopg2-binary>=2.9.0        # PostgreSQL driver
+# alembic>=1.12.0               # Database migrations
+
+# Export Features
+# ----------------------------------------------------------------------------
+# reportlab>=4.0.0              # PDF generation
+# python-docx>=1.0.0            # DOCX generation
+# ebooklib>=0.18                # EPUB generation
+
+# Advanced AI Features
+# ----------------------------------------------------------------------------
+# langchain>=0.1.0              # LLM application framework
+# chromadb>=0.4.0               # Vector database for RAG
+# sentence-transformers>=2.2.0  # Embeddings for semantic search
+
+# ============================================================================
+# Notes:
+# ============================================================================
+# - The application works with just the core dependencies
+# - Optional dependencies can be installed as needed
+# - For production deployment, consider pinning exact versions
+# - Use 'pip install -r requirements.txt' for basic installation
+# - Use 'pip install -r requirements-dev.txt' for development (if created)
+# ============================================================================

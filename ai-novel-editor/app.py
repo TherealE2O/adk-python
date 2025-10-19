@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 
 from src.services.storage import StorageService
 from src.services.project_manager import ProjectManager
+from src.services.llm_service import LLMService
 from src.agents.worldbuilding_agent import WorldBuildingAgent
 from src.agents.editing_agent import EditingAgent
 from src.models.project import Project, Chapter
@@ -46,6 +47,12 @@ if 'editing_agent' not in st.session_state:
   st.session_state.editing_agent = None
 if 'current_chapter_id' not in st.session_state:
   st.session_state.current_chapter_id = None
+if 'llm_service' not in st.session_state:
+  st.session_state.llm_service = LLMService()
+if 'ai_result' not in st.session_state:
+  st.session_state.ai_result = None
+if 'selected_text' not in st.session_state:
+  st.session_state.selected_text = ""
 
 
 def show_project_manager():
@@ -73,9 +80,13 @@ def show_project_manager():
               st.session_state.current_project = project
               project_manager.current_project = project
               st.session_state.worldbuilding_agent = WorldBuildingAgent(
-                  project.truth
+                  project.truth,
+                  st.session_state.llm_service
               )
-              st.session_state.editing_agent = EditingAgent(project.truth)
+              st.session_state.editing_agent = EditingAgent(
+                  project.truth,
+                  st.session_state.llm_service
+              )
               st.session_state.current_page = 'editor'
               st.rerun()
           
@@ -104,7 +115,8 @@ def show_project_manager():
         )
         st.session_state.current_project = project
         st.session_state.worldbuilding_agent = WorldBuildingAgent(
-            project.truth
+            project.truth,
+            st.session_state.llm_service
         )
         st.session_state.current_page = 'worldbuilding'
         st.success(f"Project '{title}' created!")
@@ -123,9 +135,13 @@ def show_project_manager():
           st.session_state.current_project = project
           project_manager.current_project = project
           st.session_state.worldbuilding_agent = WorldBuildingAgent(
-              project.truth
+              project.truth,
+              st.session_state.llm_service
           )
-          st.session_state.editing_agent = EditingAgent(project.truth)
+          st.session_state.editing_agent = EditingAgent(
+              project.truth,
+              st.session_state.llm_service
+          )
           st.session_state.current_page = 'editor'
           st.rerun()
   else:
@@ -228,7 +244,10 @@ def show_worldbuilding():
       
       if st.button("🚀 Start Writing", type="primary"):
         st.session_state.current_page = 'editor'
-        st.session_state.editing_agent = EditingAgent(project.truth)
+        st.session_state.editing_agent = EditingAgent(
+            project.truth,
+            st.session_state.llm_service
+        )
         st.rerun()
 
 
@@ -308,19 +327,95 @@ def show_editor():
       
       # AI editing tools
       st.subheader("AI Editing Tools")
-      col1, col2, col3 = st.columns(3)
+      
+      # Check if AI is available
+      if not st.session_state.llm_service.is_available():
+        st.warning("⚠️ AI features require GOOGLE_API_KEY. Set it in .env file.")
+      
+      # Text selection for editing
+      selected_text = st.text_area(
+          "Select text to edit (or leave empty to edit entire chapter):",
+          value=st.session_state.selected_text,
+          height=100,
+          key="text_to_edit"
+      )
+      
+      col1, col2, col3, col4 = st.columns(4)
       
       with col1:
-        if st.button("✨ Improve"):
-          st.info("Improve feature - integrate with Google Gemini API")
+        if st.button("✨ Improve", disabled=not st.session_state.llm_service.is_available()):
+          with st.spinner("Improving text..."):
+            text_to_improve = selected_text if selected_text else content
+            all_chapters = project.get_sorted_chapters()
+            result = st.session_state.editing_agent.improve_text(
+                text_to_improve,
+                chapter,
+                all_chapters
+            )
+            st.session_state.ai_result = result
+            st.rerun()
       
       with col2:
-        if st.button("📝 Expand"):
-          st.info("Expand feature - integrate with Google Gemini API")
+        if st.button("📝 Expand", disabled=not st.session_state.llm_service.is_available()):
+          with st.spinner("Expanding text..."):
+            text_to_expand = selected_text if selected_text else content
+            all_chapters = project.get_sorted_chapters()
+            result = st.session_state.editing_agent.expand_text(
+                text_to_expand,
+                chapter,
+                all_chapters
+            )
+            st.session_state.ai_result = result
+            st.rerun()
       
       with col3:
-        if st.button("🔄 Rephrase"):
-          st.info("Rephrase feature - integrate with Google Gemini API")
+        if st.button("🔄 Rephrase", disabled=not st.session_state.llm_service.is_available()):
+          with st.spinner("Rephrasing text..."):
+            text_to_rephrase = selected_text if selected_text else content
+            all_chapters = project.get_sorted_chapters()
+            result = st.session_state.editing_agent.rephrase_text(
+                text_to_rephrase,
+                chapter,
+                all_chapters
+            )
+            st.session_state.ai_result = result
+            st.rerun()
+      
+      with col4:
+        if st.button("💡 Suggest Next", disabled=not st.session_state.llm_service.is_available()):
+          with st.spinner("Generating suggestion..."):
+            all_chapters = project.get_sorted_chapters()
+            result = st.session_state.editing_agent.suggest_next_chapter(
+                all_chapters
+            )
+            st.session_state.ai_result = result
+            st.rerun()
+      
+      # Display AI result
+      if st.session_state.ai_result:
+        st.subheader("AI Result")
+        st.write(st.session_state.ai_result)
+        
+        col_a, col_b = st.columns(2)
+        with col_a:
+          if st.button("✅ Use This"):
+            if selected_text and selected_text in content:
+              # Replace selected text
+              new_content = content.replace(selected_text, st.session_state.ai_result)
+              project_manager.update_chapter_content(chapter.id, new_content)
+            else:
+              # Append to chapter
+              new_content = content + "\n\n" + st.session_state.ai_result
+              project_manager.update_chapter_content(chapter.id, new_content)
+            st.session_state.ai_result = None
+            st.session_state.selected_text = ""
+            st.success("Applied AI suggestion!")
+            st.rerun()
+        
+        with col_b:
+          if st.button("❌ Discard"):
+            st.session_state.ai_result = None
+            st.rerun()
   else:
     st.info("Select or create a chapter to start writing.")
   

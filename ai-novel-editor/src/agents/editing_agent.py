@@ -6,18 +6,21 @@ from typing import Optional
 
 from ..models.truth import TruthKnowledgeBase
 from ..models.project import Chapter
+from ..services.llm_service import LLMService
 
 
 class EditingAgent:
   """Agent for AI-assisted text editing grounded in Truth."""
   
-  def __init__(self, truth: TruthKnowledgeBase):
+  def __init__(self, truth: TruthKnowledgeBase, llm_service: Optional[LLMService] = None):
     """Initialize the editing agent.
     
     Args:
       truth: The truth knowledge base to use for grounding.
+      llm_service: Optional LLM service. If None, creates a new one.
     """
     self.truth = truth
+    self.llm_service = llm_service or LLMService()
   
   def get_truth_context(self) -> str:
     """Get a text summary of the Truth for context.
@@ -233,3 +236,129 @@ class EditingAgent:
     )
     
     return "\n".join(prompt_parts)
+  
+  def improve_text(
+      self,
+      text: str,
+      chapter: Optional[Chapter] = None,
+      all_chapters: Optional[list[Chapter]] = None
+  ) -> str:
+    """Improve the given text using AI.
+    
+    Args:
+      text: The text to improve.
+      chapter: The current chapter.
+      all_chapters: All chapters for context.
+      
+    Returns:
+      The improved text.
+    """
+    if not self.llm_service.is_available():
+      return "AI service not available. Please set GOOGLE_API_KEY."
+    
+    prompt = self.create_editing_prompt('improve', text, chapter, all_chapters)
+    
+    try:
+      return self.llm_service.generate_text(prompt, temperature=0.7)
+    except Exception as e:
+      return f"Error improving text: {str(e)}"
+  
+  def expand_text(
+      self,
+      text: str,
+      chapter: Optional[Chapter] = None,
+      all_chapters: Optional[list[Chapter]] = None
+  ) -> str:
+    """Expand the given text with more detail using AI.
+    
+    Args:
+      text: The text to expand.
+      chapter: The current chapter.
+      all_chapters: All chapters for context.
+      
+    Returns:
+      The expanded text.
+    """
+    if not self.llm_service.is_available():
+      return "AI service not available. Please set GOOGLE_API_KEY."
+    
+    prompt = self.create_editing_prompt('expand', text, chapter, all_chapters)
+    
+    try:
+      return self.llm_service.generate_text(prompt, temperature=0.7)
+    except Exception as e:
+      return f"Error expanding text: {str(e)}"
+  
+  def rephrase_text(
+      self,
+      text: str,
+      chapter: Optional[Chapter] = None,
+      all_chapters: Optional[list[Chapter]] = None
+  ) -> str:
+    """Rephrase the given text using AI.
+    
+    Args:
+      text: The text to rephrase.
+      chapter: The current chapter.
+      all_chapters: All chapters for context.
+      
+    Returns:
+      The rephrased text.
+    """
+    if not self.llm_service.is_available():
+      return "AI service not available. Please set GOOGLE_API_KEY."
+    
+    prompt = self.create_editing_prompt('rephrase', text, chapter, all_chapters)
+    
+    try:
+      return self.llm_service.generate_text(prompt, temperature=0.7)
+    except Exception as e:
+      return f"Error rephrasing text: {str(e)}"
+  
+  def suggest_next_chapter(
+      self,
+      all_chapters: list[Chapter]
+  ) -> str:
+    """Suggest what the next chapter should be about.
+    
+    Args:
+      all_chapters: All existing chapters.
+      
+    Returns:
+      Suggestion for the next chapter.
+    """
+    if not self.llm_service.is_available():
+      return "AI service not available. Please set GOOGLE_API_KEY."
+    
+    prompt = self.create_chapter_planning_prompt(all_chapters)
+    
+    try:
+      return self.llm_service.generate_text(prompt, temperature=0.8)
+    except Exception as e:
+      return f"Error suggesting next chapter: {str(e)}"
+  
+  def generate_paragraph(
+      self,
+      instruction: str,
+      chapter: Optional[Chapter] = None,
+      all_chapters: Optional[list[Chapter]] = None
+  ) -> str:
+    """Generate a new paragraph based on instruction.
+    
+    Args:
+      instruction: User's instruction for what to generate.
+      chapter: The current chapter.
+      all_chapters: All chapters for context.
+      
+    Returns:
+      The generated paragraph.
+    """
+    if not self.llm_service.is_available():
+      return "AI service not available. Please set GOOGLE_API_KEY."
+    
+    prompt = self.create_generation_prompt(instruction, chapter, all_chapters)
+    
+    try:
+      return self.llm_service.generate_text(prompt, temperature=0.8)
+    except Exception as e:
+      return f"Error generating paragraph: {str(e)}"
