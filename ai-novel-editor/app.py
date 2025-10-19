@@ -10,6 +10,8 @@ from dotenv import load_dotenv
 from src.services.storage import StorageService
 from src.services.project_manager import ProjectManager
 from src.services.llm_service import LLMService
+from src.services.voice_service import VoiceService
+from src.services.audio_service import AudioService
 from src.agents.worldbuilding_agent import WorldBuildingAgent
 from src.agents.editing_agent import EditingAgent
 from src.models.project import Project, Chapter
@@ -49,10 +51,20 @@ if 'current_chapter_id' not in st.session_state:
   st.session_state.current_chapter_id = None
 if 'llm_service' not in st.session_state:
   st.session_state.llm_service = LLMService()
+if 'voice_service' not in st.session_state:
+  st.session_state.voice_service = VoiceService()
+if 'audio_service' not in st.session_state:
+  st.session_state.audio_service = AudioService()
 if 'ai_result' not in st.session_state:
   st.session_state.ai_result = None
 if 'selected_text' not in st.session_state:
   st.session_state.selected_text = ""
+if 'voice_enabled' not in st.session_state:
+  st.session_state.voice_enabled = False
+if 'listening' not in st.session_state:
+  st.session_state.listening = False
+if 'audio_mode' not in st.session_state:
+  st.session_state.audio_mode = 'text'  # 'text', 'upload', 'record'
 
 
 def show_project_manager():
@@ -154,6 +166,7 @@ def show_worldbuilding():
   
   project = st.session_state.current_project
   agent = st.session_state.worldbuilding_agent
+  audio_service = st.session_state.audio_service
   
   if not project or not agent:
     st.error("No active project. Please return to project manager.")
@@ -161,16 +174,78 @@ def show_worldbuilding():
   
   st.write(f"**Project:** {project.title}")
   
+  # Audio input mode selector
+  if audio_service.is_available():
+    st.session_state.audio_mode = st.radio(
+        "Input Mode:",
+        ["💬 Text", "🎤 Audio Upload"],
+        horizontal=True,
+        index=0 if st.session_state.audio_mode == 'text' else 1,
+        help="Choose how to provide your answers"
+    )
+    # Normalize the mode value
+    if "Text" in st.session_state.audio_mode:
+      st.session_state.audio_mode = 'text'
+    else:
+      st.session_state.audio_mode = 'upload'
+  else:
+    st.info("💡 Set GOOGLE_API_KEY in .env for audio transcription features")
+  
   # Initialize question tree if not exists
   if not agent.question_tree:
     st.subheader("Let's start building your story!")
-    initial_answer = st.text_area(
-        "What is your story about?",
-        height=150,
-        help="Describe your story idea in a few sentences."
-    )
     
-    if st.button("Start World Building"):
+    initial_question = "What is your story about?"
+    st.markdown(f"**{initial_question}**")
+    
+    initial_answer = ""
+    
+    if st.session_state.audio_mode == 'upload':
+      # Audio upload mode
+      st.write("Upload an audio file describing your story:")
+      
+      supported_formats = audio_service.get_supported_formats()
+      format_list = ", ".join(supported_formats.keys())
+      st.caption(f"Supported formats: {format_list}")
+      
+      uploaded_audio = st.file_uploader(
+          "Choose an audio file",
+          type=list(supported_formats.keys()).lower(),
+          key="initial_audio_upload"
+      )
+      
+      if uploaded_audio:
+        with st.spinner("🎧 Transcribing audio..."):
+          # Save the uploaded file
+          audio_path = audio_service.save_uploaded_audio(uploaded_audio)
+          
+          if audio_path:
+            # Transcribe using Gemini
+            transcript = audio_service.transcribe_audio_file(
+                audio_path,
+                prompt="Generate a detailed transcript of this story description."
+            )
+            
+            if transcript:
+              st.success("✅ Audio transcribed!")
+              st.write("**Transcript:**")
+              st.write(transcript)
+              initial_answer = transcript
+            else:
+              st.error("Failed to transcribe audio. Please try again or use text mode.")
+          else:
+            st.error("Failed to save audio file.")
+    
+    else:
+      # Text mode
+      initial_answer = st.text_area(
+          "Your answer:",
+          height=150,
+          help="Describe your story idea in a few sentences.",
+          key="initial_answer_text"
+      )
+    
+    if st.button("Start World Building", type="primary"):
       if initial_answer:
         agent.initialize_question_tree(initial_answer)
         agent.generate_follow_up_questions(
@@ -184,12 +259,140 @@ def show_worldbuilding():
         st.error("Please provide an answer to get started.")
   else:
     # Show question tree visualization
-    st.subheader("Question Tree")
-    tree_summary = agent.get_question_tree_summary()
+    st.subheader("Question Tree Navigation")
     
     # Display current questions
     pending_questions = agent.question_tree.get_pending_questions()
     answered_questions = agent.question_tree.get_answered_questions()
+    
+    # Visual tree representation
+    st.markdown("### 📊 Question Tree Structure")
+    
+    # View mode selector
+    view_mode = st.radio(
+        "View Mode:",
+        ["Tree View", "List by Category", "Timeline"],
+        horizontal=True,
+        key="tree_view_mode"
+    )
+    
+    if view_mode == "List by Category":
+      # Group questions by entity type
+      st.markdown("#### Questions by Category")
+      
+      categories = {
+          'character': {'icon': '👤', 'name': 'Characters', 'questions': []},
+          'plot_event': {'icon': '📖', 'name': 'Plot Events', 'questions': []},
+          'setting': {'icon': '🗺️', 'name': 'Settings & World', 'questions': []}
+      }
+      
+      # Categorize all questions
+      for node in agent.question_tree.nodes.values():
+        entity_type = node.entity_type.value
+        if entity_type in categories:
+          categories[entity_type]['questions'].append(node)
+      
+      # Display by category
+      for cat_key, cat_data in categories.items():
+        if cat_data['questions']:
+          with st.expander(f"{cat_data['icon']} {cat_data['name']} ({len(cat_data['questions'])} questions)", expanded=True):
+            for node in cat_data['questions']:
+              status_icon = "✅" if node.status.value == 'answered' else "⏳"
+              col_q1, col_q2 = st.columns([4, 1])
+              with col_q1:
+                st.write(f"{status_icon} {node.question}")
+                if node.answer:
+                  st.caption(f"Answer: {node.answer[:100]}...")
+              with col_q2:
+                if node.status.value == 'pending':
+                  if st.button("Answer", key=f"cat_ans_{node.id}"):
+                    st.session_state.selected_question_id = node.id
+                    st.rerun()
+    
+    elif view_mode == "Timeline":
+      # Show questions in order they were created/answered
+      st.markdown("#### Question Timeline")
+      
+      all_nodes = list(agent.question_tree.nodes.values())
+      # Sort by creation (using ID as proxy for creation order)
+      all_nodes.sort(key=lambda n: n.id)
+      
+      for i, node in enumerate(all_nodes):
+        status_icon = "✅" if node.status.value == 'answered' else "⏳"
+        entity_icons = {'character': '👤', 'plot_event': '📖', 'setting': '🗺️'}
+        entity_icon = entity_icons.get(node.entity_type.value, '❓')
+        
+        col_t1, col_t2, col_t3 = st.columns([1, 5, 1])
+        with col_t1:
+          st.write(f"**{i+1}**")
+        with col_t2:
+          st.write(f"{status_icon} {entity_icon} {node.question}")
+          if node.answer:
+            with st.expander("View Answer"):
+              st.write(node.answer)
+        with col_t3:
+          if node.status.value == 'pending':
+            if st.button("→", key=f"time_ans_{node.id}", help="Answer this"):
+              st.session_state.selected_question_id = node.id
+              st.rerun()
+        
+        if i < len(all_nodes) - 1:
+          st.markdown("↓")
+    
+    else:  # Tree View
+      # Create expandable tree view
+      def render_tree_node(node_id: str, level: int = 0):
+        """Recursively render tree nodes."""
+        node = agent.question_tree.get_node(node_id)
+        if not node:
+          return
+        
+        # Determine status icon
+        if node.status.value == 'answered':
+          status_icon = "✅"
+        elif node.status.value == 'pending':
+          status_icon = "⏳"
+        else:
+          status_icon = "❓"
+        
+        # Determine entity icon
+        entity_icons = {
+            'character': '👤',
+            'plot_event': '📖',
+            'setting': '🗺️'
+        }
+        entity_icon = entity_icons.get(node.entity_type.value, '❓')
+        
+        # Create indentation
+        indent = "　" * level  # Using full-width space for better indentation
+        
+        # Create expander for this node
+        with st.expander(f"{indent}{status_icon} {entity_icon} {node.question}", expanded=(level == 0)):
+          if node.answer:
+            st.write(f"**Answer:** {node.answer}")
+          else:
+            st.write("*Not yet answered*")
+          
+          # Show entity type and status
+          st.caption(f"Type: {node.entity_type.value} | Status: {node.status.value}")
+          
+          # Button to jump to this question
+          if node.status.value == 'pending':
+            if st.button(f"Answer This Question", key=f"jump_{node.id}"):
+              st.session_state.selected_question_id = node.id
+              st.rerun()
+          
+          # Render children
+          if node.children_ids:
+            st.markdown(f"**Follow-up questions ({len(node.children_ids)}):**")
+            for child_id in node.children_ids:
+              render_tree_node(child_id, level + 1)
+    
+      # Render the tree starting from root
+      if agent.question_tree.root_id:
+        render_tree_node(agent.question_tree.root_id)
+    
+    st.divider()
     
     col1, col2 = st.columns([2, 1])
     
@@ -206,26 +409,96 @@ def show_worldbuilding():
             for q in pending_questions
         }
         
+        # Use selected question from tree if available
+        default_index = 0
+        if 'selected_question_id' in st.session_state and st.session_state.selected_question_id in question_options:
+          default_index = list(question_options.keys()).index(st.session_state.selected_question_id)
+        
         selected_q_id = st.selectbox(
             "Select a question to answer:",
             options=list(question_options.keys()),
-            format_func=lambda x: question_options[x]
+            format_func=lambda x: question_options[x],
+            index=default_index,
+            key="question_selector"
         )
+        
+        # Clear the selected question after using it
+        if 'selected_question_id' in st.session_state:
+          del st.session_state.selected_question_id
         
         if selected_q_id:
           selected_node = agent.question_tree.get_node(selected_q_id)
           
-          answer = st.text_area(
-              f"Your answer to: {selected_node.question}",
-              height=150
-          )
+          # Show breadcrumb navigation (path from root to current question)
+          def get_path_to_node(node_id: str) -> list[QuestionNode]:
+            """Get the path from root to a specific node."""
+            path = []
+            current = agent.question_tree.get_node(node_id)
+            while current:
+              path.insert(0, current)
+              if current.parent_id:
+                current = agent.question_tree.get_node(current.parent_id)
+              else:
+                break
+            return path
           
-          if st.button("Submit Answer"):
+          path = get_path_to_node(selected_q_id)
+          if len(path) > 1:
+            st.markdown("**Question Path:**")
+            breadcrumb = " → ".join([f"{node.entity_type.value[:4].upper()}" for node in path[:-1]])
+            st.caption(f"{breadcrumb} → **Current**")
+          
+          st.markdown(f"### {selected_node.question}")
+          
+          answer = ""
+          
+          if st.session_state.audio_mode == 'upload':
+            # Audio upload mode
+            st.write("Upload an audio file with your answer:")
+            
+            uploaded_audio = st.file_uploader(
+                "Choose an audio file",
+                type=['wav', 'mp3', 'aiff', 'aac', 'ogg', 'flac'],
+                key=f"audio_upload_{selected_q_id}"
+            )
+            
+            if uploaded_audio:
+              with st.spinner("🎧 Transcribing audio..."):
+                # Save the uploaded file
+                audio_path = audio_service.save_uploaded_audio(uploaded_audio)
+                
+                if audio_path:
+                  # Transcribe using Gemini
+                  transcript = audio_service.transcribe_audio_file(
+                      audio_path,
+                      prompt=f"Generate a detailed transcript answering: {selected_node.question}"
+                  )
+                  
+                  if transcript:
+                    st.success("✅ Audio transcribed!")
+                    st.write("**Transcript:**")
+                    st.write(transcript)
+                    answer = transcript
+                  else:
+                    st.error("Failed to transcribe audio. Please try again or use text mode.")
+                else:
+                  st.error("Failed to save audio file.")
+          
+          else:
+            # Text mode
+            answer = st.text_area(
+                "Your answer:",
+                height=150,
+                key=f"answer_{selected_q_id}"
+            )
+          
+          if st.button("Submit Answer", key=f"submit_{selected_q_id}", type="primary"):
             if answer:
               new_questions = agent.answer_question(selected_q_id, answer)
               project_manager.save_current_project()
+              
               st.success(
-                  f"Answer recorded! Generated {len(new_questions)} "
+                  f"✅ Answer recorded! Generated {len(new_questions)} "
                   "follow-up questions."
               )
               st.rerun()
