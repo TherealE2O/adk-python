@@ -31,9 +31,26 @@ The AI Novel Editor now includes **full voice AI integration** and **enhanced vi
 
 ### 2. Enhanced Visual Question Tree Navigation
 
-#### Three View Modes
+#### Four View Modes
 
-##### Tree View (Default)
+##### Mind Map (NEW!)
+- **Interactive graph visualization** showing the entire question tree
+- Visual indicators:
+  - 🟢 Green nodes: Answered questions
+  - 🟡 Yellow nodes: Pending questions
+  - 🔴 Red: Character questions
+  - 🔵 Teal: Plot event questions
+  - 🟢 Light green: Setting questions
+- **Interactive features**:
+  - Click nodes to select questions
+  - Scroll to zoom in/out
+  - Drag to pan around the map
+  - Hover to see full question text
+- **Hierarchical layout**: Root at top, branches below
+- **Navigation buttons**: Built-in zoom and reset controls
+- Perfect for visual thinkers and getting an overview
+
+##### Tree View
 - **Hierarchical expandable tree** showing parent-child relationships
 - Visual indicators:
   - ✅ Answered questions

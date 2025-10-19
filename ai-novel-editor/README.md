@@ -14,14 +14,15 @@ All AI features are now **fully implemented and working**:
 - ✅ **Audio input with Gemini transcription** (NEW!)
 - ✅ Context-grounded in your story's "Truth"
 
-See [AI_FEATURES.md](AI_FEATURES.md) and [AUDIO_FEATURES.md](AUDIO_FEATURES.md) for complete documentation.
+See [AI_FEATURES.md](AI_FEATURES.md), [AUDIO_FEATURES.md](AUDIO_FEATURES.md), and [MINDMAP_FEATURES.md](MINDMAP_FEATURES.md) for complete documentation.
 
 ### Module 1: Project Manager & Story Inception
 - **Project Management**: Create, open, and manage multiple novel projects
 - **Interactive World-Building**: AI-powered Q&A to establish story foundations
 - **Audio Input**: Upload audio files for voice-based answers (powered by Gemini)
 - **Dynamic Question Tree**: Branching questions based on user answers
-  - Three view modes: Tree View, Category View, Timeline View
+  - **Four view modes**: Mind Map (NEW!), Tree View, Category View, Timeline View
+  - **Interactive Mind Map**: Visual graph with zoom, pan, and click navigation
   - Visual navigation of question structure
   - User-controlled navigation (jump between branches, go backwards)
   - Cross-branch analysis and automatic question generation

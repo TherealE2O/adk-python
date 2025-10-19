@@ -16,6 +16,7 @@ from src.agents.worldbuilding_agent import WorldBuildingAgent
 from src.agents.editing_agent import EditingAgent
 from src.models.project import Project, Chapter
 from src.models.truth import QuestionNode
+from src.ui.mindmap import render_mindmap, get_mindmap_legend, AGRAPH_AVAILABLE
 
 # Load environment variables
 load_dotenv()
@@ -269,14 +270,36 @@ def show_worldbuilding():
     st.markdown("### 📊 Question Tree Structure")
     
     # View mode selector
+    view_options = ["Mind Map", "Tree View", "List by Category", "Timeline"]
+    if not AGRAPH_AVAILABLE:
+      view_options.remove("Mind Map")
+      st.info("💡 Install streamlit-agraph for interactive mind map: `pip install streamlit-agraph`")
+    
     view_mode = st.radio(
         "View Mode:",
-        ["Tree View", "List by Category", "Timeline"],
+        view_options,
         horizontal=True,
         key="tree_view_mode"
     )
     
-    if view_mode == "List by Category":
+    if view_mode == "Mind Map":
+      # Interactive mind map visualization
+      st.markdown("#### 🧠 Interactive Mind Map")
+      st.markdown(get_mindmap_legend(), unsafe_allow_html=True)
+      
+      # Render the mind map
+      selected_node_id = render_mindmap(agent.question_tree)
+      
+      # If a node was clicked, navigate to it
+      if selected_node_id:
+        selected_node = agent.question_tree.get_node(selected_node_id)
+        if selected_node and selected_node.status.value == 'pending':
+          st.session_state.selected_question_id = selected_node_id
+          st.info(f"Selected: {selected_node.question}")
+          if st.button("Answer This Question", key="mindmap_answer"):
+            st.rerun()
+    
+    elif view_mode == "List by Category":
       # Group questions by entity type
       st.markdown("#### Questions by Category")
       
