@@ -4,6 +4,14 @@ from __future__ import annotations
 
 import streamlit as st
 from typing import Optional
+import tempfile
+import os
+
+try:
+  from audio_recorder_streamlit import audio_recorder
+  AUDIO_RECORDER_AVAILABLE = True
+except ImportError:
+  AUDIO_RECORDER_AVAILABLE = False
 
 
 def audio_input_widget(
@@ -137,7 +145,7 @@ def universal_text_input(
     audio_prompt: Optional[str] = None,
     default_value: str = ""
 ) -> str:
-  """Universal text input with audio option.
+  """Universal text input with audio option (upload or record).
   
   Args:
     label: Label for the input.
@@ -165,32 +173,102 @@ def universal_text_input(
       st.write(f"**{label}**")
     
     with col2:
-      if st.button("🎤 Audio", key=f"audio_toggle_{key}", help="Use audio input"):
+      if st.button("🎤 Audio", key=f"audio_toggle_{key}", help="Record or upload audio"):
         st.session_state[f"show_audio_{key}"] = not st.session_state.get(f"show_audio_{key}", False)
     
-    # Show audio upload if toggled
+    # Show audio options if toggled
     if st.session_state.get(f"show_audio_{key}", False):
-      uploaded_audio = st.file_uploader(
-          "Upload audio file",
-          type=['wav', 'mp3', 'aiff', 'aac', 'ogg', 'flac'],
-          key=f"audio_file_{key}"
-      )
-      
-      if uploaded_audio:
-        with st.spinner("🎧 Transcribing..."):
-          audio_path = audio_service.save_uploaded_audio(uploaded_audio)
+      # Audio input tabs
+      if AUDIO_RECORDER_AVAILABLE:
+        tab1, tab2 = st.tabs(["🎙️ Record", "📁 Upload"])
+        
+        with tab1:
+          st.caption("Click to start/stop recording")
+          audio_bytes = audio_recorder(
+              text="",
+              recording_color="#e74c3c",
+              neutral_color="#3498db",
+              icon_name="microphone",
+              icon_size="2x",
+              key=f"audio_recorder_{key}"
+          )
           
-          if audio_path:
-            transcript = audio_service.transcribe_audio_file(
-                audio_path,
-                prompt=audio_prompt or "Generate a detailed transcript."
-            )
+          if audio_bytes:
+            with st.spinner("🎧 Transcribing recording..."):
+              # Save audio bytes to temporary file
+              with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_file:
+                tmp_file.write(audio_bytes)
+                temp_path = tmp_file.name
+              
+              try:
+                # Transcribe using Gemini
+                transcript = audio_service.transcribe_audio_file(
+                    temp_path,
+                    prompt=audio_prompt or "Generate a detailed transcript."
+                )
+                
+                if transcript:
+                  st.success("✅ Transcribed!")
+                  st.session_state[transcript_key] = transcript
+                  st.session_state[f"show_audio_{key}"] = False
+                  # Clean up temp file
+                  os.unlink(temp_path)
+                  st.rerun()
+                else:
+                  st.error("Failed to transcribe. Please try again.")
+              except Exception as e:
+                st.error(f"Error: {e}")
+              finally:
+                # Ensure temp file is cleaned up
+                if os.path.exists(temp_path):
+                  os.unlink(temp_path)
+        
+        with tab2:
+          uploaded_audio = st.file_uploader(
+              "Choose an audio file",
+              type=['wav', 'mp3', 'aiff', 'aac', 'ogg', 'flac'],
+              key=f"audio_file_{key}"
+          )
+          
+          if uploaded_audio:
+            with st.spinner("🎧 Transcribing..."):
+              audio_path = audio_service.save_uploaded_audio(uploaded_audio)
+              
+              if audio_path:
+                transcript = audio_service.transcribe_audio_file(
+                    audio_path,
+                    prompt=audio_prompt or "Generate a detailed transcript."
+                )
+                
+                if transcript:
+                  st.success("✅ Transcribed!")
+                  st.session_state[transcript_key] = transcript
+                  st.session_state[f"show_audio_{key}"] = False
+                  st.rerun()
+      else:
+        # Fallback to upload only if recorder not available
+        st.info("💡 Install audio-recorder-streamlit for microphone recording")
+        uploaded_audio = st.file_uploader(
+            "Upload audio file",
+            type=['wav', 'mp3', 'aiff', 'aac', 'ogg', 'flac'],
+            key=f"audio_file_{key}"
+        )
+        
+        if uploaded_audio:
+          with st.spinner("🎧 Transcribing..."):
+            audio_path = audio_service.save_uploaded_audio(uploaded_audio)
             
-            if transcript:
-              st.success("✅ Transcribed!")
-              st.session_state[transcript_key] = transcript
-              st.session_state[f"show_audio_{key}"] = False
-              st.rerun()
+            if audio_path:
+              transcript = audio_service.transcribe_audio_file(
+                  audio_path,
+                  prompt=audio_prompt or "Generate a detailed transcript."
+              )
+              
+              if transcript:
+                st.success("✅ Transcribed!")
+                st.session_state[transcript_key] = transcript
+                st.session_state[f"show_audio_{key}"] = False
+                st.rerun()
   
   # Render the text input
   if input_type == "text_area":

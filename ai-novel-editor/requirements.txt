@@ -30,6 +30,7 @@ google-genai>=0.3.0             # Google Gemini API client
 # Advanced Visualization
 # ----------------------------------------------------------------------------
 streamlit-agraph>=0.0.45        # Graph visualization for question tree (mind map)
+audio-recorder-streamlit>=0.0.8 # Browser-based audio recording
 # plotly>=5.0.0                 # Interactive charts
 # networkx>=3.0                 # Graph data structures
 

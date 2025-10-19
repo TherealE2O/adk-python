@@ -11,10 +11,10 @@ All AI features are now **fully implemented and working**:
 - ✅ AI chapter planning and suggestions
 - ✅ AI question generation for world-building
 - ✅ AI entity extraction from answers
-- ✅ **Universal audio input - use voice EVERYWHERE** (NEW!)
+- ✅ **Universal audio input - record with mic or upload files EVERYWHERE** (NEW!)
 - ✅ Context-grounded in your story's "Truth"
 
-See [AI_FEATURES.md](AI_FEATURES.md), [UNIVERSAL_AUDIO.md](UNIVERSAL_AUDIO.md), and [MINDMAP_FEATURES.md](MINDMAP_FEATURES.md) for complete documentation.
+See [AI_FEATURES.md](AI_FEATURES.md), [UNIVERSAL_AUDIO.md](UNIVERSAL_AUDIO.md), [MICROPHONE_RECORDING.md](MICROPHONE_RECORDING.md), and [MINDMAP_FEATURES.md](MINDMAP_FEATURES.md) for complete documentation.
 
 ### Module 1: Project Manager & Story Inception
 - **Project Management**: Create, open, and manage multiple novel projects

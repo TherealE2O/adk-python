@@ -27,28 +27,54 @@ The AI Novel Editor now features **universal audio input** - you can use audio t
 
 ## 🎤 How to Use
 
-### Step-by-Step
+### Two Ways to Input Audio
+
+#### Method 1: Record with Microphone (NEW!)
 
 1. **Find a Text Field**
    - Any text input or text area in the app
 
 2. **Click the 🎤 Audio Button**
    - Located next to the field label
-   - Toggles the audio upload interface
+   - Opens audio input interface
+
+3. **Select "Record" Tab**
+   - Choose the 🎙️ Record tab
+   - Browser will ask for microphone permission (first time)
+
+4. **Record Your Audio**
+   - Click the microphone icon to start recording
+   - Speak your content
+   - Click again to stop recording
+
+5. **Wait for Transcription**
+   - Gemini transcribes automatically (2-10 seconds)
+   - Transcript appears in the text field
+   - You can edit the transcript if needed
+
+6. **Submit or Continue**
+   - The transcribed text is now in the field
+   - Submit the form or continue editing
+
+#### Method 2: Upload Audio File
+
+1. **Click the 🎤 Audio Button**
+   - Opens audio input interface
+
+2. **Select "Upload" Tab**
+   - Choose the 📁 Upload tab
 
 3. **Upload Your Audio File**
-   - Click "Upload audio file"
+   - Click "Choose an audio file"
    - Select your recording (WAV, MP3, etc.)
    - Supported formats: WAV, MP3, AIFF, AAC, OGG, FLAC
 
 4. **Wait for Transcription**
    - Gemini transcribes automatically (2-10 seconds)
-   - Transcript appears in the text field
-   - You can edit the transcript if needed
+   - Transcript fills the text field
 
 5. **Submit or Continue**
-   - The transcribed text is now in the field
-   - Submit the form or continue editing
+   - Edit if needed and submit
 
 ## 📍 Example Workflows
 
@@ -110,7 +136,52 @@ The AI Novel Editor now features **universal audio input** - you can use audio t
 - **Editable**: You can edit the transcript
 - **Persistent**: Transcript stays until you submit or clear
 
+## 🎙️ Microphone Recording
+
+### Browser-Based Recording
+
+The app now includes **built-in microphone recording**:
+
+- **No software needed** - Works in your browser
+- **Click to record** - Simple start/stop interface
+- **Real-time** - Record and transcribe immediately
+- **Universal** - Works on all devices (desktop, laptop, tablet)
+- **Secure** - Recording happens in your browser
+
+### How It Works
+
+1. **Browser Permission**: First time you record, browser asks for microphone access
+2. **Click to Start**: Click the microphone icon to begin recording
+3. **Speak Naturally**: Talk at normal pace, the mic captures everything
+4. **Click to Stop**: Click again when done
+5. **Auto-Transcribe**: Gemini transcribes your recording automatically
+6. **Edit & Submit**: Review transcript, edit if needed, submit
+
+### Recording Tips
+
+1. **Use a Quiet Space**
+   - Reduces background noise
+   - Improves transcription accuracy
+
+2. **Speak Clearly**
+   - Normal pace is fine
+   - Enunciate important names/terms
+
+3. **Keep Recordings Short**
+   - Under 2 minutes for best results
+   - Break long content into chunks
+
+4. **Test Your Mic**
+   - Do a quick test recording first
+   - Adjust mic position if needed
+
 ## 💡 Features
+
+### Two Input Methods
+
+- **🎙️ Record** - Use your microphone (NEW!)
+- **📁 Upload** - Upload pre-recorded files
+- Switch between methods anytime
 
 ### Context-Aware Transcription
 Each field has a custom prompt for better accuracy:
