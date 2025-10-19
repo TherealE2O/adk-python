@@ -20,10 +20,9 @@ See [AI_FEATURES.md](AI_FEATURES.md), [UNIVERSAL_AUDIO.md](UNIVERSAL_AUDIO.md), 
 - **Project Management**: Create, open, and manage multiple novel projects
 - **Interactive World-Building**: AI-powered Q&A to establish story foundations
 - **Universal Audio Input**: 🎤 Use voice input **anywhere you can type** (powered by Gemini)
-  - Project creation form
-  - All Q&A questions
-  - Chapter editor
-  - Text selection for AI editing
+  - **🎙️ Record with microphone** - Click and speak directly in browser
+  - **📁 Upload audio files** - Upload pre-recorded files
+  - Works in: Project creation, Q&A, chapter editor, everywhere!
 - **Dynamic Question Tree**: Branching questions based on user answers
   - **Four view modes**: Mind Map (NEW!), Tree View, Category View, Timeline View
   - **Interactive Mind Map**: Visual graph with zoom, pan, and click navigation

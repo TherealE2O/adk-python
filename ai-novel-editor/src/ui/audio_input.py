@@ -215,7 +215,15 @@ def universal_text_input(
                   os.unlink(temp_path)
                   st.rerun()
                 else:
-                  st.error("Failed to transcribe. Please try again.")
+                  st.error("❌ Failed to transcribe. Please check:")
+                  st.markdown("""
+                  - ✅ GOOGLE_API_KEY is set in .env
+                  - ✅ Internet connection is working
+                  - ✅ Recording has audio (not silent)
+                  - ✅ Try uploading a file instead
+                  
+                  See [TROUBLESHOOTING_TRANSCRIPTION.md](TROUBLESHOOTING_TRANSCRIPTION.md) for help.
+                  """)
               except Exception as e:
                 st.error(f"Error: {e}")
               finally:
@@ -269,6 +277,16 @@ def universal_text_input(
                 st.session_state[transcript_key] = transcript
                 st.session_state[f"show_audio_{key}"] = False
                 st.rerun()
+              else:
+                st.error("❌ Failed to transcribe. Please check:")
+                st.markdown("""
+                - ✅ GOOGLE_API_KEY is set in .env
+                - ✅ Internet connection is working
+                - ✅ Audio file is valid (WAV, MP3, etc.)
+                - ✅ File size is under 20 MB
+                
+                See [TROUBLESHOOTING_TRANSCRIPTION.md](TROUBLESHOOTING_TRANSCRIPTION.md) for help.
+                """)
   
   # Render the text input
   if input_type == "text_area":

@@ -51,22 +51,61 @@ class AudioService:
       Transcribed text, or None if failed.
     """
     if not self.is_available():
+      print("❌ Audio service not available. Please set GOOGLE_API_KEY in .env")
       return None
+    
+    # Verify file exists
+    if not os.path.exists(file_path):
+      print(f"❌ Audio file not found: {file_path}")
+      return None
+    
+    # Check file size
+    file_size = os.path.getsize(file_path)
+    if file_size == 0:
+      print(f"❌ Audio file is empty: {file_path}")
+      return None
+    
+    if file_size > 20 * 1024 * 1024:  # 20 MB
+      print(f"⚠️ Audio file is large ({file_size / 1024 / 1024:.1f} MB). This may take longer.")
     
     try:
       # Upload the audio file
+      print(f"📤 Uploading audio file ({file_size / 1024:.1f} KB)...")
       audio_file = self.client.files.upload(file=file_path)
       
       # Generate transcript
+      print(f"🎧 Transcribing with Gemini...")
       response = self.client.models.generate_content(
           model=self.model,
           contents=[prompt, audio_file]
       )
       
-      return response.text
+      if response and response.text:
+        print(f"✅ Transcription successful ({len(response.text)} characters)")
+        return response.text
+      else:
+        print(f"❌ No transcript returned from Gemini")
+        return None
     
     except Exception as e:
-      print(f"Error transcribing audio: {e}")
+      error_type = type(e).__name__
+      error_msg = str(e)
+      
+      print(f"❌ Transcription failed: {error_type}")
+      print(f"   Details: {error_msg}")
+      
+      # Provide helpful hints based on error type
+      if "API key" in error_msg or "authentication" in error_msg.lower():
+        print("   💡 Hint: Check your GOOGLE_API_KEY in .env file")
+      elif "network" in error_msg.lower() or "connection" in error_msg.lower():
+        print("   💡 Hint: Check your internet connection")
+      elif "quota" in error_msg.lower() or "rate" in error_msg.lower():
+        print("   💡 Hint: API rate limit reached. Wait a moment and try again")
+      elif "format" in error_msg.lower() or "unsupported" in error_msg.lower():
+        print("   💡 Hint: Try a different audio format (WAV or MP3)")
+      else:
+        print("   💡 Hint: See TROUBLESHOOTING_TRANSCRIPTION.md for help")
+      
       return None
   
   def transcribe_audio_bytes(
