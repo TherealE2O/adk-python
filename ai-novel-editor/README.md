@@ -11,15 +11,19 @@ All AI features are now **fully implemented and working**:
 - ✅ AI chapter planning and suggestions
 - ✅ AI question generation for world-building
 - ✅ AI entity extraction from answers
-- ✅ **Audio input with Gemini transcription** (NEW!)
+- ✅ **Universal audio input - use voice EVERYWHERE** (NEW!)
 - ✅ Context-grounded in your story's "Truth"
 
-See [AI_FEATURES.md](AI_FEATURES.md), [AUDIO_FEATURES.md](AUDIO_FEATURES.md), and [MINDMAP_FEATURES.md](MINDMAP_FEATURES.md) for complete documentation.
+See [AI_FEATURES.md](AI_FEATURES.md), [UNIVERSAL_AUDIO.md](UNIVERSAL_AUDIO.md), and [MINDMAP_FEATURES.md](MINDMAP_FEATURES.md) for complete documentation.
 
 ### Module 1: Project Manager & Story Inception
 - **Project Management**: Create, open, and manage multiple novel projects
 - **Interactive World-Building**: AI-powered Q&A to establish story foundations
-- **Audio Input**: Upload audio files for voice-based answers (powered by Gemini)
+- **Universal Audio Input**: 🎤 Use voice input **anywhere you can type** (powered by Gemini)
+  - Project creation form
+  - All Q&A questions
+  - Chapter editor
+  - Text selection for AI editing
 - **Dynamic Question Tree**: Branching questions based on user answers
   - **Four view modes**: Mind Map (NEW!), Tree View, Category View, Timeline View
   - **Interactive Mind Map**: Visual graph with zoom, pan, and click navigation

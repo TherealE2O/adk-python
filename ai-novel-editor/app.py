@@ -17,6 +17,7 @@ from src.agents.editing_agent import EditingAgent
 from src.models.project import Project, Chapter
 from src.models.truth import QuestionNode
 from src.ui.mindmap import render_mindmap, get_mindmap_legend, AGRAPH_AVAILABLE
+from src.ui.audio_input import universal_text_input
 
 # Load environment variables
 load_dotenv()
@@ -112,14 +113,47 @@ def show_project_manager():
   
   with col2:
     st.header("Create New Project")
-    with st.form("new_project_form"):
-      title = st.text_input("Project Title*")
-      description = st.text_area("Description")
-      author = st.text_input("Author Name")
-      genre = st.text_input("Genre")
-      
-      submitted = st.form_submit_button("Create Project")
-      if submitted and title:
+    
+    # Project form with audio support
+    title = universal_text_input(
+        "Project Title*",
+        "project_title",
+        st.session_state.audio_service,
+        input_type="text_input",
+        help_text="Enter your project title",
+        audio_prompt="Transcribe the project title."
+    )
+    
+    description = universal_text_input(
+        "Description",
+        "project_description",
+        st.session_state.audio_service,
+        input_type="text_area",
+        height=100,
+        help_text="Describe your novel project",
+        audio_prompt="Transcribe the project description."
+    )
+    
+    author = universal_text_input(
+        "Author Name",
+        "project_author",
+        st.session_state.audio_service,
+        input_type="text_input",
+        help_text="Your name",
+        audio_prompt="Transcribe the author name."
+    )
+    
+    genre = universal_text_input(
+        "Genre",
+        "project_genre",
+        st.session_state.audio_service,
+        input_type="text_input",
+        help_text="e.g., Fantasy, Sci-Fi, Romance",
+        audio_prompt="Transcribe the genre."
+    )
+    
+    if st.button("Create Project", type="primary"):
+      if title:
         project = project_manager.create_project(
             title=title,
             description=description,
@@ -132,9 +166,14 @@ def show_project_manager():
             st.session_state.llm_service
         )
         st.session_state.current_page = 'worldbuilding'
+        # Clear transcript session state
+        for key in ['transcript_project_title', 'transcript_project_description', 
+                    'transcript_project_author', 'transcript_project_genre']:
+          if key in st.session_state:
+            del st.session_state[key]
         st.success(f"Project '{title}' created!")
         st.rerun()
-      elif submitted:
+      else:
         st.error("Please provide a project title.")
   
   # Example projects section
@@ -175,76 +214,28 @@ def show_worldbuilding():
   
   st.write(f"**Project:** {project.title}")
   
-  # Audio input mode selector
+  # Show audio availability status
   if audio_service.is_available():
-    st.session_state.audio_mode = st.radio(
-        "Input Mode:",
-        ["💬 Text", "🎤 Audio Upload"],
-        horizontal=True,
-        index=0 if st.session_state.audio_mode == 'text' else 1,
-        help="Choose how to provide your answers"
-    )
-    # Normalize the mode value
-    if "Text" in st.session_state.audio_mode:
-      st.session_state.audio_mode = 'text'
-    else:
-      st.session_state.audio_mode = 'upload'
+    st.success("🎤 Audio input available - Click the 🎤 Audio button next to any text field")
   else:
-    st.info("💡 Set GOOGLE_API_KEY in .env for audio transcription features")
+    st.info("💡 Set GOOGLE_API_KEY in .env to enable audio input everywhere")
   
   # Initialize question tree if not exists
   if not agent.question_tree:
     st.subheader("Let's start building your story!")
     
     initial_question = "What is your story about?"
-    st.markdown(f"**{initial_question}**")
     
-    initial_answer = ""
-    
-    if st.session_state.audio_mode == 'upload':
-      # Audio upload mode
-      st.write("Upload an audio file describing your story:")
-      
-      supported_formats = audio_service.get_supported_formats()
-      format_list = ", ".join(supported_formats.keys())
-      st.caption(f"Supported formats: {format_list}")
-      
-      uploaded_audio = st.file_uploader(
-          "Choose an audio file",
-          type=list(supported_formats.keys()).lower(),
-          key="initial_audio_upload"
-      )
-      
-      if uploaded_audio:
-        with st.spinner("🎧 Transcribing audio..."):
-          # Save the uploaded file
-          audio_path = audio_service.save_uploaded_audio(uploaded_audio)
-          
-          if audio_path:
-            # Transcribe using Gemini
-            transcript = audio_service.transcribe_audio_file(
-                audio_path,
-                prompt="Generate a detailed transcript of this story description."
-            )
-            
-            if transcript:
-              st.success("✅ Audio transcribed!")
-              st.write("**Transcript:**")
-              st.write(transcript)
-              initial_answer = transcript
-            else:
-              st.error("Failed to transcribe audio. Please try again or use text mode.")
-          else:
-            st.error("Failed to save audio file.")
-    
-    else:
-      # Text mode
-      initial_answer = st.text_area(
-          "Your answer:",
-          height=150,
-          help="Describe your story idea in a few sentences.",
-          key="initial_answer_text"
-      )
+    # Use universal text input with audio support
+    initial_answer = universal_text_input(
+        initial_question,
+        "initial_story_answer",
+        audio_service,
+        input_type="text_area",
+        height=150,
+        help_text="Describe your story idea in a few sentences. You can type or use audio.",
+        audio_prompt="Generate a detailed transcript of this story description."
+    )
     
     if st.button("Start World Building", type="primary"):
       if initial_answer:
@@ -254,6 +245,9 @@ def show_worldbuilding():
             agent.question_tree.root_id
         )
         project_manager.save_current_project()
+        # Clear transcript
+        if 'transcript_initial_story_answer' in st.session_state:
+          del st.session_state['transcript_initial_story_answer']
         st.success("Question tree initialized!")
         st.rerun()
       else:
@@ -471,49 +465,16 @@ def show_worldbuilding():
             breadcrumb = " → ".join([f"{node.entity_type.value[:4].upper()}" for node in path[:-1]])
             st.caption(f"{breadcrumb} → **Current**")
           
-          st.markdown(f"### {selected_node.question}")
-          
-          answer = ""
-          
-          if st.session_state.audio_mode == 'upload':
-            # Audio upload mode
-            st.write("Upload an audio file with your answer:")
-            
-            uploaded_audio = st.file_uploader(
-                "Choose an audio file",
-                type=['wav', 'mp3', 'aiff', 'aac', 'ogg', 'flac'],
-                key=f"audio_upload_{selected_q_id}"
-            )
-            
-            if uploaded_audio:
-              with st.spinner("🎧 Transcribing audio..."):
-                # Save the uploaded file
-                audio_path = audio_service.save_uploaded_audio(uploaded_audio)
-                
-                if audio_path:
-                  # Transcribe using Gemini
-                  transcript = audio_service.transcribe_audio_file(
-                      audio_path,
-                      prompt=f"Generate a detailed transcript answering: {selected_node.question}"
-                  )
-                  
-                  if transcript:
-                    st.success("✅ Audio transcribed!")
-                    st.write("**Transcript:**")
-                    st.write(transcript)
-                    answer = transcript
-                  else:
-                    st.error("Failed to transcribe audio. Please try again or use text mode.")
-                else:
-                  st.error("Failed to save audio file.")
-          
-          else:
-            # Text mode
-            answer = st.text_area(
-                "Your answer:",
-                height=150,
-                key=f"answer_{selected_q_id}"
-            )
+          # Use universal text input with audio support
+          answer = universal_text_input(
+              selected_node.question,
+              f"answer_{selected_q_id}",
+              audio_service,
+              input_type="text_area",
+              height=150,
+              help_text="Type your answer or use audio to dictate",
+              audio_prompt=f"Generate a detailed transcript answering: {selected_node.question}"
+          )
           
           if st.button("Submit Answer", key=f"submit_{selected_q_id}", type="primary"):
             if answer:
@@ -583,15 +544,25 @@ def show_editor():
     st.divider()
     
     # Add new chapter
-    with st.form("add_chapter"):
-      new_ch_num = len(chapters) + 1
-      new_ch_title = st.text_input("New Chapter Title")
-      if st.form_submit_button("Add Chapter"):
-        if new_ch_title:
-          chapter = project_manager.add_chapter(new_ch_num, new_ch_title)
-          st.session_state.current_chapter_id = chapter.id
-          st.success(f"Chapter {new_ch_num} added!")
-          st.rerun()
+    st.subheader("Add Chapter")
+    new_ch_num = len(chapters) + 1
+    new_ch_title = universal_text_input(
+        f"Chapter {new_ch_num} Title",
+        "new_chapter_title",
+        st.session_state.audio_service,
+        input_type="text_input",
+        help_text="Enter chapter title",
+        audio_prompt="Transcribe the chapter title."
+    )
+    if st.button("Add Chapter", key="add_chapter_btn"):
+      if new_ch_title:
+        chapter = project_manager.add_chapter(new_ch_num, new_ch_title)
+        st.session_state.current_chapter_id = chapter.id
+        # Clear transcript
+        if 'transcript_new_chapter_title' in st.session_state:
+          del st.session_state['transcript_new_chapter_title']
+        st.success(f"Chapter {new_ch_num} added!")
+        st.rerun()
     
     st.divider()
     
@@ -609,12 +580,16 @@ def show_editor():
     if chapter:
       st.subheader(f"Chapter {chapter.number}: {chapter.title}")
       
-      # Editor
-      content = st.text_area(
+      # Editor with audio support
+      content = universal_text_input(
           "Chapter Content",
-          value=chapter.content,
+          f"chapter_content_{chapter.id}",
+          st.session_state.audio_service,
+          input_type="text_area",
           height=400,
-          key="chapter_content"
+          help_text="Write your chapter here or use audio to dictate",
+          audio_prompt="Transcribe the chapter content in detail.",
+          default_value=chapter.content
       )
       
       if st.button("💾 Save Chapter"):
@@ -628,12 +603,16 @@ def show_editor():
       if not st.session_state.llm_service.is_available():
         st.warning("⚠️ AI features require GOOGLE_API_KEY. Set it in .env file.")
       
-      # Text selection for editing
-      selected_text = st.text_area(
-          "Select text to edit (or leave empty to edit entire chapter):",
-          value=st.session_state.selected_text,
+      # Text selection for editing with audio support
+      selected_text = universal_text_input(
+          "Select text to edit (or leave empty to edit entire chapter)",
+          "text_to_edit",
+          st.session_state.audio_service,
+          input_type="text_area",
           height=100,
-          key="text_to_edit"
+          help_text="Paste or dictate the text you want to edit",
+          audio_prompt="Transcribe the text to be edited.",
+          default_value=st.session_state.selected_text
       )
       
       col1, col2, col3, col4 = st.columns(4)
