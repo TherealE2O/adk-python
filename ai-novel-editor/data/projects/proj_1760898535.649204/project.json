@@ -1,0 +1,102 @@
+{
+  "id": "proj_1760898535.649204",
+  "title": "Spark Against the Stee",
+  "description": "In the neon-scorched chasms of Aethelgard, Kael is a thief who relies on speed, not sorcery. But when he steals the legendary Phoenix Ember, he draws the wrath of the Steel-Souled Inquisitors, relentless hunters armored in null-magic runes that devour all magical energy. Cornered and outmatched, Kael must unleash a power he doesn't understand, igniting a war against the city's most feared enforcers just to survive the fall.",
+  "author": "osas",
+  "genre": "action fantasy ",
+  "truth": {
+    "characters": {},
+    "plot_events": {},
+    "settings": {},
+    "question_tree": {
+      "root_id": "q_1760898555.735082",
+      "nodes": {
+        "q_1760898555.735082": {
+          "id": "q_1760898555.735082",
+          "question": "What is your story about?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": null,
+          "children_ids": [
+            "q_1760898558.751637",
+            "q_1760898558.751845",
+            "q_1760898558.751924",
+            "q_1760898558.751995",
+            "q_1760898558.752062"
+          ],
+          "status": "answered",
+          "answer": "The rain fell in neon-laced sheets, striking the high spires of Aethelgard with a chemical hiss. Down below, in the chasm-like streets of the Undercity, Kael didn't feel the rain. He only felt the grit, the smog, and the thrum of the two Inquisitors on his tail.\n\n\"By the Void, they're persistent,\" he muttered, vaulting over a rusted bulkhead.\n\nHis boots, worn smooth, found purchase on a narrow pipe. Kael was a whisper, a shadow with stolen goods. Tonight\u2019s prize was a \"Phoenix Ember,\" a pulsating, fiery crystal that was currently burning a hole in the lead-lined pouch on his hip. It was also, apparently, the personal property of the Ordainer-General. A fatal error in judgment.\n\nBehind him, two figures landed on the bulkhead with a heavy, metallic *clang*. They were the Steel-Souled Inquisitors, hunters of the magically-afflicted. Their armor was dull iron, etched with glowing blue runes that crackled with null-magic, an energy that *devoured* sorcery.\n\nOne Inquisitor raised a gauntlet. \"Halt, mag-scum! Surrender the relic!\"\n\nKael laughed, a short, sharp bark. \"Surrender? I just went through three hex-wards and a pressure-plated floor for this! At least buy me dinner first!\"\n\nHe took a running start and leaped across a twenty-foot gap, a chasm that opened onto the city\u2019s grinding, sparking generator-core thousands of feet below. He caught the opposing ledge by his fingertips, his muscles screaming.\n\nThe Inquisitors didn't jump. They *flew*.\n\nRunes on their boots flared, and jets of kinetic force propelled them across the gap. One landed hard, cracking the ferrocrete. The other, faster, brought a heavy, rune-etched warmaul swinging down.\n\nKael wasn't a sorcerer. He was just fast. He rolled under the swing, the hammer shattering the spot where he\u2019d been. The impact sent a shockwave of null-magic pulsing outward, and the Phoenix Ember on Kael's hip *screamed*\u2014a high-pitched whine of agony.\n\n\"Sorry, little spark!\" Kael grunted. He scrambled up a maintenance ladder, the Inquisitors right behind him.\n\nHe reached a small, exposed platform overlooking the generator-core. A dead end. The chasm winds howled, ripping at his cloak. The two Inquisitors stalked toward him, their visors dark, their null-runes painting the platform in a sickly blue light.\n\n\"Nowhere to run, thief,\" the first one said, his voice a metallic rasp.\n\n\"I hate it when you're right,\" Kael said. He ripped the Phoenix Ember from his pouch.\n\nIt was the size of a human heart, throbbing with internal fire. In the presence of the null-magic, it was beginning to gutter, its light dimming.\n\n\"The Ember must be sanctified,\" the second Inquisitor intoned, raising his maul. \"It will be cleansed of its chaotic taint. As will you.\"\n\nKael looked at the Ember. He looked at the impossible drop below. He looked at the two walking tanks of anti-magic. His payday was gone. Now, it was just about survival.\n\n\"You know,\" Kael said, holding the Ember up, \"I'm not a big fan of 'cleansing.'\"\n\n\"Your preference is irrelevant.\"\n\nThe first Inquisitor lunged, his hand outstretched to seize the relic.\n\nKael did the one thing they didn't expect.\n\nHe didn't run. He didn't fight. He *fed* the Ember.\n\nWith a roar, Kael slammed his own life-force\u2014a sliver of his stamina, his will\u2014into the crystal. It was a desperate, forbidden technique, one that could burn a man out to a husk.\n\nThe Phoenix Ember, starved by the null-magic, suddenly force-fed a new source of energy, did not just *ignite*. It *detonated*.\n\n$BOOM.$\n\nA torrent of pure, unbridled fire erupted from the crystal. It wasn't just flame; it was a physical manifestation of creation, a wave of liquid sun.\n\nThe first Inquisitor's null-runes flared, trying to devour the onslaught. But this wasn't a spell. It was a raw element. The runes were overwhelmed in a microsecond. The Inquisitor's armor melted, then vaporized. He was gone before his scream was.\n\nThe second Inquisitor, further back, brought his maul up in a desperate block. The wave of fire struck him, sending him skidding back across the platform, his armor glowing cherry-red. He was still standing, but his runes were smoking, shattered husks.\n\nKael felt the kickback. The power surge threw him backward, over the edge of the platform.\n\nHe fell.\n\nWind screamed past his ears. The generator-core rushed up to meet him\u2014a city-sized vortex of lightning and grinding metal.\n\n\"Scrap!\" he yelled into the void.\n\nHe fumbled at his belt for his saving grace. Not magic, but engineering. His hand closed around the spool of his auto-grapple. He fired it. The hook shot up, snagging the underside of the platform just as the Inquisitor, wreathed in smoke, peered over the edge.\n\nThe line went taut, snapping Kael's shoulder with a brutal $CRACK$. He hung there, swinging wildly, a thousand feet above the core.\n\nThe Inquisitor raised his maul. It was no longer glowing with null-magic. It was just a very large, very heavy piece of metal. He was going to cut the line.\n\nKael looked down. Below him, a transport gondola, laden with raw copper ingots, was slowly moving on a lower track. It was now or never.\n\nHe released the grapple.\n\nHe fell again, a hundred feet this time, aiming for the gondola. He hit the pile of ingots with a bone-jarring crash that sent agony up his legs. He was alive. Battered, bruised, and with a dislocated shoulder, but alive.\n\nHe looked up. The Inquisitor was a small, dark shape against the smog-filled light, watching him go. Kael couldn't see his face, but he could feel the hatred, cold and pure, even from this distance.\n\nKael lay back on the hard, cold copper, the gondola slowly carrying him toward the smelting district. The Phoenix Ember was gone, disintegrated in the blast. He was broke, injured, and had just declared war on the most powerful organization in the city.\n\nHe felt the lead-lined pouch on his hip. It was empty. But it was still searing hot.\n\nHe grimaced, sitting up and popping his shoulder back into its socket with a choked-off scream.\n\n\"Alright,\" he panted, the wind whipping his hair. \"So, dinner's off.\"\n\nHe looked out over the vast, terrible beauty of Aethelgard. The hunt was on. But Kael was a runner. And in the shadowed chasms of the Undercity, the prey always had the home-field advantage.",
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760898558.751637": {
+          "id": "q_1760898558.751637",
+          "question": "What specific event or belief transformed the Inquisitors into such zealous hunters of the magically-afflicted, and how does their rigid ideology contrast with the chaotic, unpredictable nature of magic in Aethelgard?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760898555.735082",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760898558.751845": {
+          "id": "q_1760898558.751845",
+          "question": "Beyond mere profit, what personal connection or deeper purpose drove Kael to steal the Phoenix Ember, knowing the immense risk involved with targeting the Ordainer-General?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760898555.735082",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760898558.751924": {
+          "id": "q_1760898558.751924",
+          "question": "How does the Undercity's physical environment, with its neon-laced rain and industrial decay, shape the lives and survival strategies of its inhabitants, particularly those like Kael who operate outside the law?",
+          "entity_type": "character",
+          "entity_id": null,
+          "parent_id": "q_1760898555.735082",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760898558.751995": {
+          "id": "q_1760898558.751995",
+          "question": "What other factions or organizations exist within Aethelgard that might either aid or hinder Kael in his conflict with the Inquisitors, and what are their motivations for getting involved?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760898555.735082",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760898558.752062": {
+          "id": "q_1760898558.752062",
+          "question": "Given the Ember's explosive reaction to Kael's life-force and the searing heat lingering in the pouch, what untapped potential or latent ability within Kael was awakened, and how will this unforeseen consequence impact his future actions and the unfolding narrative?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760898555.735082",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        }
+      },
+      "current_node_id": null
+    },
+    "created_at": "2025-10-19T19:28:55.649132",
+    "updated_at": "2025-10-19T19:28:55.649181"
+  },
+  "chapters": {},
+  "created_at": "2025-10-19T19:28:55.649226",
+  "updated_at": "2025-10-19T19:28:55.649228",
+  "is_example": false
+}

@@ -60,6 +60,19 @@ def test_question_node():
   assert node.question == "What is your character's name?"
   assert node.status == QuestionStatus.PENDING
   assert node.entity_type == EntityType.CHARACTER
+  assert node.answer is None
+  assert node.parent_id is None
+  assert len(node.children_ids) == 0
+  assert len(node.related_entity_ids) == 0
+  
+  # Test with related entities
+  node_with_relations = QuestionNode(
+      question="How do these characters interact?",
+      entity_type=EntityType.CHARACTER,
+      related_entity_ids=["char_1", "char_2"]
+  )
+  assert len(node_with_relations.related_entity_ids) == 2
+  assert "char_1" in node_with_relations.related_entity_ids
 
 
 def test_question_tree():
@@ -80,6 +93,30 @@ def test_question_tree():
   assert len(tree.nodes) == 2
   assert child.id in root.children_ids
   assert child.parent_id == root.id
+  
+  # Test get_node
+  retrieved = tree.get_node(child.id)
+  assert retrieved is not None
+  assert retrieved.question == "Child question"
+  
+  # Test get_pending_questions
+  pending = tree.get_pending_questions()
+  assert len(pending) == 2
+  
+  # Test update_node_status
+  tree.update_node_status(child.id, QuestionStatus.ANSWERED)
+  assert tree.nodes[child.id].status == QuestionStatus.ANSWERED
+  assert tree.nodes[child.id].answered_at is not None
+  
+  # Test get_answered_questions
+  answered = tree.get_answered_questions()
+  assert len(answered) == 1
+  assert answered[0].id == child.id
+  
+  # Test get_pending_questions after update
+  pending = tree.get_pending_questions()
+  assert len(pending) == 1
+  assert pending[0].id == root.id
 
 
 def test_truth_knowledge_base():

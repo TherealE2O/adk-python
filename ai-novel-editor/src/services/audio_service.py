@@ -1,318 +1,436 @@
-"""Audio service using Gemini's native audio understanding."""
+"""Audio Service for transcription using Google Gemini Audio API.
 
-from __future__ import annotations
+This module provides audio transcription capabilities using Gemini's native
+audio understanding, with proper error handling and retry logic.
+"""
 
-import os
-import tempfile
+import time
+import logging
 from pathlib import Path
 from typing import Optional
-
 from google import genai
 from google.genai import types
+from google.api_core import exceptions as google_exceptions
+
+from .base import AIService
+from ..config import config
 
 
-class AudioService:
-  """Service for audio recording and transcription using Gemini."""
-  
-  def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.0-flash-exp"):
-    """Initialize the audio service.
+logger = logging.getLogger(__name__)
+
+
+class AudioService(AIService):
+    """Service for audio transcription using Google Gemini Audio API.
     
-    Args:
-      api_key: Google AI API key. If None, reads from GOOGLE_API_KEY env var.
-      model: The Gemini model to use.
+    Provides methods for transcribing audio from files and byte data,
+    with support for multiple audio formats and proper error handling.
     """
-    self.api_key = api_key or os.getenv('GOOGLE_API_KEY')
-    self.model = model
-    self.client = None
     
-    if self.api_key:
-      self.client = genai.Client(api_key=self.api_key)
-  
-  def is_available(self) -> bool:
-    """Check if the audio service is available.
-    
-    Returns:
-      True if API key is configured, False otherwise.
-    """
-    return self.client is not None
-  
-  def transcribe_audio_file(
-      self,
-      file_path: str,
-      prompt: str = "Generate a transcript of the speech."
-  ) -> Optional[str]:
-    """Transcribe an audio file using Gemini.
-    
-    Args:
-      file_path: Path to the audio file.
-      prompt: Custom prompt for transcription.
-      
-    Returns:
-      Transcribed text, or None if failed.
-    """
-    if not self.is_available():
-      print("❌ Audio service not available. Please set GOOGLE_API_KEY in .env")
-      return None
-    
-    # Verify file exists
-    if not os.path.exists(file_path):
-      print(f"❌ Audio file not found: {file_path}")
-      return None
-    
-    # Check file size
-    file_size = os.path.getsize(file_path)
-    if file_size == 0:
-      print(f"❌ Audio file is empty: {file_path}")
-      return None
-    
-    if file_size > 20 * 1024 * 1024:  # 20 MB
-      print(f"⚠️ Audio file is large ({file_size / 1024 / 1024:.1f} MB). This may take longer.")
-    
-    try:
-      # Upload the audio file
-      print(f"📤 Uploading audio file ({file_size / 1024:.1f} KB)...")
-      audio_file = self.client.files.upload(file=file_path)
-      
-      # Generate transcript
-      print(f"🎧 Transcribing with Gemini...")
-      response = self.client.models.generate_content(
-          model=self.model,
-          contents=[prompt, audio_file]
-      )
-      
-      if response and response.text:
-        print(f"✅ Transcription successful ({len(response.text)} characters)")
-        return response.text
-      else:
-        print(f"❌ No transcript returned from Gemini")
-        return None
-    
-    except Exception as e:
-      error_type = type(e).__name__
-      error_msg = str(e)
-      
-      print(f"❌ Transcription failed: {error_type}")
-      print(f"   Details: {error_msg}")
-      
-      # Provide helpful hints based on error type
-      if "API key" in error_msg or "authentication" in error_msg.lower():
-        print("   💡 Hint: Check your GOOGLE_API_KEY in .env file")
-      elif "network" in error_msg.lower() or "connection" in error_msg.lower():
-        print("   💡 Hint: Check your internet connection")
-      elif "quota" in error_msg.lower() or "rate" in error_msg.lower():
-        print("   💡 Hint: API rate limit reached. Wait a moment and try again")
-      elif "format" in error_msg.lower() or "unsupported" in error_msg.lower():
-        print("   💡 Hint: Try a different audio format (WAV or MP3)")
-      else:
-        print("   💡 Hint: See TROUBLESHOOTING_TRANSCRIPTION.md for help")
-      
-      return None
-  
-  def transcribe_audio_bytes(
-      self,
-      audio_bytes: bytes,
-      mime_type: str = "audio/wav",
-      prompt: str = "Generate a transcript of the speech."
-  ) -> Optional[str]:
-    """Transcribe audio data from bytes using Gemini.
-    
-    Args:
-      audio_bytes: Audio data as bytes.
-      mime_type: MIME type of the audio (e.g., 'audio/wav', 'audio/mp3').
-      prompt: Custom prompt for transcription.
-      
-    Returns:
-      Transcribed text, or None if failed.
-    """
-    if not self.is_available():
-      return None
-    
-    try:
-      # Create audio part from bytes
-      audio_part = types.Part.from_bytes(
-          data=audio_bytes,
-          mime_type=mime_type
-      )
-      
-      # Generate transcript
-      response = self.client.models.generate_content(
-          model=self.model,
-          contents=[prompt, audio_part]
-      )
-      
-      return response.text
-    
-    except Exception as e:
-      print(f"Error transcribing audio bytes: {e}")
-      return None
-  
-  def analyze_audio(
-      self,
-      file_path: str,
-      prompt: str
-  ) -> Optional[str]:
-    """Analyze audio content with a custom prompt.
-    
-    Args:
-      file_path: Path to the audio file.
-      prompt: Analysis prompt (e.g., "Summarize the main points").
-      
-    Returns:
-      Analysis result, or None if failed.
-    """
-    if not self.is_available():
-      return None
-    
-    try:
-      # Upload the audio file
-      audio_file = self.client.files.upload(file=file_path)
-      
-      # Generate analysis
-      response = self.client.models.generate_content(
-          model=self.model,
-          contents=[prompt, audio_file]
-      )
-      
-      return response.text
-    
-    except Exception as e:
-      print(f"Error analyzing audio: {e}")
-      return None
-  
-  def transcribe_with_timestamps(
-      self,
-      file_path: str,
-      start_time: str,
-      end_time: str
-  ) -> Optional[str]:
-    """Transcribe a specific segment of audio using timestamps.
-    
-    Args:
-      file_path: Path to the audio file.
-      start_time: Start timestamp in MM:SS format.
-      end_time: End timestamp in MM:SS format.
-      
-    Returns:
-      Transcribed text for the segment, or None if failed.
-    """
-    if not self.is_available():
-      return None
-    
-    try:
-      # Upload the audio file
-      audio_file = self.client.files.upload(file=file_path)
-      
-      # Create prompt with timestamps
-      prompt = f"Provide a transcript of the speech from {start_time} to {end_time}."
-      
-      # Generate transcript
-      response = self.client.models.generate_content(
-          model=self.model,
-          contents=[prompt, audio_file]
-      )
-      
-      return response.text
-    
-    except Exception as e:
-      print(f"Error transcribing audio segment: {e}")
-      return None
-  
-  def count_audio_tokens(self, file_path: str) -> Optional[int]:
-    """Count tokens in an audio file.
-    
-    Note: Gemini represents each second of audio as 32 tokens.
-    
-    Args:
-      file_path: Path to the audio file.
-      
-    Returns:
-      Token count, or None if failed.
-    """
-    if not self.is_available():
-      return None
-    
-    try:
-      # Upload the audio file
-      audio_file = self.client.files.upload(file=file_path)
-      
-      # Count tokens
-      response = self.client.models.count_tokens(
-          model=self.model,
-          contents=[audio_file]
-      )
-      
-      return response.total_tokens
-    
-    except Exception as e:
-      print(f"Error counting tokens: {e}")
-      return None
-  
-  def save_uploaded_audio(
-      self,
-      uploaded_file,
-      output_dir: str = "data/audio"
-  ) -> Optional[str]:
-    """Save an uploaded audio file to disk.
-    
-    Args:
-      uploaded_file: Streamlit uploaded file object.
-      output_dir: Directory to save the file.
-      
-    Returns:
-      Path to saved file, or None if failed.
-    """
-    try:
-      # Create output directory if it doesn't exist
-      Path(output_dir).mkdir(parents=True, exist_ok=True)
-      
-      # Generate unique filename
-      file_path = os.path.join(output_dir, uploaded_file.name)
-      
-      # Save file
-      with open(file_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-      
-      return file_path
-    
-    except Exception as e:
-      print(f"Error saving audio file: {e}")
-      return None
-  
-  @staticmethod
-  def get_supported_formats() -> dict[str, str]:
-    """Get supported audio formats.
-    
-    Returns:
-      Dictionary mapping format names to MIME types.
-    """
-    return {
-        'WAV': 'audio/wav',
-        'MP3': 'audio/mp3',
-        'AIFF': 'audio/aiff',
-        'AAC': 'audio/aac',
-        'OGG': 'audio/ogg',
-        'FLAC': 'audio/flac',
+    # Supported audio formats with their MIME types
+    SUPPORTED_FORMATS = {
+        'mp3': 'audio/mp3',
+        'wav': 'audio/wav',
+        'flac': 'audio/flac',
+        'ogg': 'audio/ogg',
+        'webm': 'audio/webm',
+        'aiff': 'audio/aiff',
+        'aac': 'audio/aac',
     }
+    
+    # Maximum file size (20 MB)
+    MAX_FILE_SIZE = 20 * 1024 * 1024
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize the Audio service.
+        
+        Args:
+            api_key: Google API key. If None, uses config.google_api_key
+        """
+        self.api_key = api_key or config.google_api_key
+        self.model_name = config.gemini_model
+        self.client: Optional[genai.Client] = None
+        
+        if self.is_available():
+            try:
+                self.client = genai.Client(api_key=self.api_key)
+                logger.info(f"Audio Service initialized with model: {self.model_name}")
+            except Exception as e:
+                logger.error(f"Failed to initialize Gemini client: {e}")
+                self.client = None
+    
+    def is_available(self) -> bool:
+        """Check if the Audio service is available.
+        
+        Returns:
+            bool: True if API key is configured and client can be initialized
+        """
+        return bool(self.api_key and self.api_key.strip())
   
-  @staticmethod
-  def get_max_duration_hours() -> float:
-    """Get maximum supported audio duration.
+    def transcribe_file(
+        self,
+        file_path: str,
+        prompt: str = "Generate a transcript of the speech."
+    ) -> str:
+        """Transcribe an audio file using Gemini.
+        
+        Args:
+            file_path: Path to the audio file
+            prompt: Custom prompt for transcription
+            
+        Returns:
+            str: Transcribed text
+            
+        Raises:
+            ValueError: If service is not available or file validation fails
+            RuntimeError: If transcription fails after retries
+        """
+        if not self.is_available() or not self.client:
+            raise ValueError("Audio Service is not available. Please configure GOOGLE_API_KEY.")
+        
+        # Validate file
+        self._validate_audio_file(file_path)
+        
+        # Transcribe with retry logic
+        return self._transcribe_file_with_retry(file_path, prompt)
     
-    Returns:
-      Maximum duration in hours (9.5 hours).
-    """
-    return 9.5
+    def transcribe_audio(
+        self,
+        audio_data: bytes,
+        mime_type: str = "audio/wav",
+        prompt: str = "Generate a transcript of the speech."
+    ) -> str:
+        """Transcribe audio data from bytes using Gemini.
+        
+        Args:
+            audio_data: Audio data as bytes
+            mime_type: MIME type of the audio (e.g., 'audio/wav', 'audio/mp3')
+            prompt: Custom prompt for transcription
+            
+        Returns:
+            str: Transcribed text
+            
+        Raises:
+            ValueError: If service is not available or data validation fails
+            RuntimeError: If transcription fails after retries
+        """
+        if not self.is_available() or not self.client:
+            raise ValueError("Audio Service is not available. Please configure GOOGLE_API_KEY.")
+        
+        # Validate audio data
+        self._validate_audio_data(audio_data, mime_type)
+        
+        # Transcribe with retry logic
+        return self._transcribe_bytes_with_retry(audio_data, mime_type, prompt)
   
-  @staticmethod
-  def estimate_tokens_from_duration(duration_seconds: float) -> int:
-    """Estimate token count from audio duration.
+    def generate(self, prompt: str, **kwargs) -> str:
+        """Generate content using the AI service (implements AIService interface).
+        
+        This method is provided for interface compatibility but audio transcription
+        requires audio data, so use transcribe_file() or transcribe_audio() instead.
+        
+        Args:
+            prompt: The input prompt (not used for audio)
+            **kwargs: Additional parameters (should include 'file_path' or 'audio_data')
+            
+        Returns:
+            str: Transcribed text
+            
+        Raises:
+            ValueError: If required audio parameters are missing
+        """
+        if 'file_path' in kwargs:
+            return self.transcribe_file(kwargs['file_path'], prompt)
+        elif 'audio_data' in kwargs:
+            mime_type = kwargs.get('mime_type', 'audio/wav')
+            return self.transcribe_audio(kwargs['audio_data'], mime_type, prompt)
+        else:
+            raise ValueError(
+                "Audio transcription requires either 'file_path' or 'audio_data' parameter"
+            )
+  
+    def _validate_audio_file(self, file_path: str) -> None:
+        """Validate an audio file.
+        
+        Args:
+            file_path: Path to the audio file
+            
+        Raises:
+            ValueError: If file validation fails
+        """
+        path = Path(file_path)
+        
+        # Check if file exists
+        if not path.exists():
+            raise ValueError(f"Audio file not found: {file_path}")
+        
+        # Check if file is empty
+        file_size = path.stat().st_size
+        if file_size == 0:
+            raise ValueError(f"Audio file is empty: {file_path}")
+        
+        # Check file size limit
+        if file_size > self.MAX_FILE_SIZE:
+            size_mb = file_size / (1024 * 1024)
+            raise ValueError(
+                f"Audio file too large: {size_mb:.1f} MB. "
+                f"Maximum size is {self.MAX_FILE_SIZE / (1024 * 1024):.0f} MB."
+            )
+        
+        # Check file format
+        extension = path.suffix.lower().lstrip('.')
+        if extension not in self.SUPPORTED_FORMATS:
+            supported = ', '.join(self.SUPPORTED_FORMATS.keys())
+            raise ValueError(
+                f"Unsupported audio format: {extension}. "
+                f"Supported formats: {supported}"
+            )
+        
+        logger.info(f"Audio file validated: {file_path} ({file_size / 1024:.1f} KB)")
     
-    Gemini represents each second of audio as 32 tokens.
+    def _validate_audio_data(self, audio_data: bytes, mime_type: str) -> None:
+        """Validate audio data.
+        
+        Args:
+            audio_data: Audio data as bytes
+            mime_type: MIME type of the audio
+            
+        Raises:
+            ValueError: If data validation fails
+        """
+        # Check if data is empty
+        if not audio_data or len(audio_data) == 0:
+            raise ValueError("Audio data is empty")
+        
+        # Check data size limit
+        if len(audio_data) > self.MAX_FILE_SIZE:
+            size_mb = len(audio_data) / (1024 * 1024)
+            raise ValueError(
+                f"Audio data too large: {size_mb:.1f} MB. "
+                f"Maximum size is {self.MAX_FILE_SIZE / (1024 * 1024):.0f} MB."
+            )
+        
+        # Check MIME type
+        if mime_type not in self.SUPPORTED_FORMATS.values():
+            supported = ', '.join(self.SUPPORTED_FORMATS.values())
+            raise ValueError(
+                f"Unsupported MIME type: {mime_type}. "
+                f"Supported types: {supported}"
+            )
+        
+        logger.info(f"Audio data validated: {len(audio_data) / 1024:.1f} KB, {mime_type}")
     
-    Args:
-      duration_seconds: Audio duration in seconds.
-      
-    Returns:
-      Estimated token count.
-    """
-    return int(duration_seconds * 32)
+    def _transcribe_file_with_retry(
+        self,
+        file_path: str,
+        prompt: str,
+        max_retries: int = 3
+    ) -> str:
+        """Transcribe an audio file with retry logic.
+        
+        Args:
+            file_path: Path to the audio file
+            prompt: Transcription prompt
+            max_retries: Maximum number of retry attempts
+            
+        Returns:
+            str: Transcribed text
+            
+        Raises:
+            RuntimeError: If all retries fail
+        """
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Uploading audio file: {file_path}")
+                audio_file = self.client.files.upload(file=file_path)
+                
+                logger.info(f"Transcribing audio with Gemini...")
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=[prompt, audio_file]
+                )
+                
+                if response and response.text:
+                    logger.info(f"Transcription successful ({len(response.text)} characters)")
+                    return response.text
+                else:
+                    raise RuntimeError("Empty response from API")
+                    
+            except google_exceptions.ResourceExhausted as e:
+                # Rate limit error - retry with exponential backoff
+                last_error = e
+                wait_time = (2 ** attempt) * 1
+                logger.warning(
+                    f"Rate limit hit (attempt {attempt + 1}/{max_retries}). "
+                    f"Retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+                
+            except google_exceptions.Unauthenticated as e:
+                # Authentication error - don't retry
+                logger.error(f"Authentication failed: {e}")
+                raise ValueError(
+                    "Invalid API key. Please check your GOOGLE_API_KEY configuration."
+                ) from e
+                
+            except google_exceptions.DeadlineExceeded as e:
+                # Timeout error - retry
+                last_error = e
+                logger.warning(
+                    f"Request timeout (attempt {attempt + 1}/{max_retries}). Retrying..."
+                )
+                time.sleep(1)
+                
+            except Exception as e:
+                # Other errors - log and raise
+                logger.error(f"Unexpected error during transcription: {e}")
+                raise RuntimeError(f"Failed to transcribe audio: {str(e)}") from e
+        
+        # All retries exhausted
+        error_msg = self.get_error_message(last_error)
+        logger.error(f"All retries exhausted. Last error: {error_msg}")
+        raise RuntimeError(
+            f"Failed to transcribe audio after {max_retries} attempts: {error_msg}"
+        )
+    
+    def _transcribe_bytes_with_retry(
+        self,
+        audio_data: bytes,
+        mime_type: str,
+        prompt: str,
+        max_retries: int = 3
+    ) -> str:
+        """Transcribe audio bytes with retry logic.
+        
+        Args:
+            audio_data: Audio data as bytes
+            mime_type: MIME type of the audio
+            prompt: Transcription prompt
+            max_retries: Maximum number of retry attempts
+            
+        Returns:
+            str: Transcribed text
+            
+        Raises:
+            RuntimeError: If all retries fail
+        """
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Create audio part from bytes
+                audio_part = types.Part.from_bytes(
+                    data=audio_data,
+                    mime_type=mime_type
+                )
+                
+                logger.info(f"Transcribing audio bytes with Gemini...")
+                response = self.client.models.generate_content(
+                    model=self.model_name,
+                    contents=[prompt, audio_part]
+                )
+                
+                if response and response.text:
+                    logger.info(f"Transcription successful ({len(response.text)} characters)")
+                    return response.text
+                else:
+                    raise RuntimeError("Empty response from API")
+                    
+            except google_exceptions.ResourceExhausted as e:
+                # Rate limit error - retry with exponential backoff
+                last_error = e
+                wait_time = (2 ** attempt) * 1
+                logger.warning(
+                    f"Rate limit hit (attempt {attempt + 1}/{max_retries}). "
+                    f"Retrying in {wait_time}s..."
+                )
+                time.sleep(wait_time)
+                
+            except google_exceptions.Unauthenticated as e:
+                # Authentication error - don't retry
+                logger.error(f"Authentication failed: {e}")
+                raise ValueError(
+                    "Invalid API key. Please check your GOOGLE_API_KEY configuration."
+                ) from e
+                
+            except google_exceptions.DeadlineExceeded as e:
+                # Timeout error - retry
+                last_error = e
+                logger.warning(
+                    f"Request timeout (attempt {attempt + 1}/{max_retries}). Retrying..."
+                )
+                time.sleep(1)
+                
+            except Exception as e:
+                # Other errors - log and raise
+                logger.error(f"Unexpected error during transcription: {e}")
+                raise RuntimeError(f"Failed to transcribe audio: {str(e)}") from e
+        
+        # All retries exhausted
+        error_msg = self.get_error_message(last_error)
+        logger.error(f"All retries exhausted. Last error: {error_msg}")
+        raise RuntimeError(
+            f"Failed to transcribe audio after {max_retries} attempts: {error_msg}"
+        )
+    
+    def get_error_message(self, error: Exception) -> str:
+        """Convert an exception to a user-friendly error message.
+        
+        Args:
+            error: The exception that occurred
+            
+        Returns:
+            str: User-friendly error message
+        """
+        if isinstance(error, google_exceptions.ResourceExhausted):
+            return (
+                "API rate limit exceeded. Please wait a moment and try again. "
+                "If this persists, consider upgrading your API quota."
+            )
+        elif isinstance(error, google_exceptions.Unauthenticated):
+            return (
+                "Authentication failed. Please check that your GOOGLE_API_KEY "
+                "is valid and has not expired."
+            )
+        elif isinstance(error, google_exceptions.DeadlineExceeded):
+            return (
+                "Request timed out. Please check your internet connection "
+                "and try again. Large audio files may take longer to process."
+            )
+        elif isinstance(error, ValueError):
+            return str(error)
+        else:
+            return f"An unexpected error occurred: {str(error)}"
+    
+    @staticmethod
+    def get_supported_formats() -> dict[str, str]:
+        """Get supported audio formats.
+        
+        Returns:
+            dict: Dictionary mapping format extensions to MIME types
+        """
+        return AudioService.SUPPORTED_FORMATS.copy()
+    
+    @staticmethod
+    def get_max_duration_seconds() -> int:
+        """Get maximum supported audio duration.
+        
+        Returns:
+            int: Maximum duration in seconds (from config)
+        """
+        return config.max_audio_duration
+    
+    @staticmethod
+    def estimate_tokens_from_duration(duration_seconds: float) -> int:
+        """Estimate token count from audio duration.
+        
+        Gemini represents each second of audio as 32 tokens.
+        
+        Args:
+            duration_seconds: Audio duration in seconds
+            
+        Returns:
+            int: Estimated token count
+        """
+        return int(duration_seconds * 32)

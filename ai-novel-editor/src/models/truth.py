@@ -20,6 +20,7 @@ class QuestionStatus(str, Enum):
   """Status of a question in the question tree."""
   PENDING = "pending"
   ANSWERED = "answered"
+  PARTIALLY_ANSWERED = "partially_answered"
   SKIPPED = "skipped"
 
 
@@ -70,12 +71,13 @@ class QuestionNode(BaseModel):
   
   id: str = Field(default_factory=lambda: f"q_{datetime.now().timestamp()}")
   question: str
+  answer: Optional[str] = None
   entity_type: EntityType
-  entity_id: Optional[str] = None
+  status: QuestionStatus = QuestionStatus.PENDING
   parent_id: Optional[str] = None
   children_ids: list[str] = Field(default_factory=list)
-  status: QuestionStatus = QuestionStatus.PENDING
-  answer: Optional[str] = None
+  related_entity_ids: list[str] = Field(default_factory=list)
+  entity_id: Optional[str] = None
   answered_at: Optional[datetime] = None
   metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -111,6 +113,13 @@ class QuestionTree(BaseModel):
         node for node in self.nodes.values()
         if node.status == QuestionStatus.ANSWERED
     ]
+  
+  def update_node_status(self, node_id: str, status: QuestionStatus) -> None:
+    """Update the status of a node."""
+    if node_id in self.nodes:
+      self.nodes[node_id].status = status
+      if status == QuestionStatus.ANSWERED:
+        self.nodes[node_id].answered_at = datetime.now()
 
 
 class TruthKnowledgeBase(BaseModel):
@@ -137,6 +146,83 @@ class TruthKnowledgeBase(BaseModel):
     """Add a setting to the knowledge base."""
     self.settings[setting.id] = setting
     self.updated_at = datetime.now()
+  
+  def update_character(self, character_id: str, character: Character) -> bool:
+    """Update an existing character in the knowledge base."""
+    if character_id not in self.characters:
+      return False
+    self.characters[character_id] = character
+    self.updated_at = datetime.now()
+    return True
+  
+  def update_plot_event(self, event_id: str, event: PlotEvent) -> bool:
+    """Update an existing plot event in the knowledge base."""
+    if event_id not in self.plot_events:
+      return False
+    self.plot_events[event_id] = event
+    self.updated_at = datetime.now()
+    return True
+  
+  def update_setting(self, setting_id: str, setting: Setting) -> bool:
+    """Update an existing setting in the knowledge base."""
+    if setting_id not in self.settings:
+      return False
+    self.settings[setting_id] = setting
+    self.updated_at = datetime.now()
+    return True
+  
+  def delete_character(self, character_id: str) -> bool:
+    """Delete a character and clean up relationships."""
+    if character_id not in self.characters:
+      return False
+    
+    # Remove from characters dict
+    del self.characters[character_id]
+    
+    # Clean up relationships in other characters
+    for char in self.characters.values():
+      if character_id in char.relationships:
+        del char.relationships[character_id]
+    
+    # Clean up references in plot events
+    for event in self.plot_events.values():
+      if character_id in event.characters_involved:
+        event.characters_involved.remove(character_id)
+    
+    # Clean up references in settings
+    for setting in self.settings.values():
+      if character_id in setting.related_characters:
+        setting.related_characters.remove(character_id)
+    
+    self.updated_at = datetime.now()
+    return True
+  
+  def delete_plot_event(self, event_id: str) -> bool:
+    """Delete a plot event and clean up references."""
+    if event_id not in self.plot_events:
+      return False
+    
+    # Remove from plot_events dict
+    del self.plot_events[event_id]
+    
+    # Clean up references in settings
+    for setting in self.settings.values():
+      if event_id in setting.related_events:
+        setting.related_events.remove(event_id)
+    
+    self.updated_at = datetime.now()
+    return True
+  
+  def delete_setting(self, setting_id: str) -> bool:
+    """Delete a setting and clean up references."""
+    if setting_id not in self.settings:
+      return False
+    
+    # Remove from settings dict
+    del self.settings[setting_id]
+    
+    self.updated_at = datetime.now()
+    return True
   
   def search(self, query: str) -> dict[str, list[Any]]:
     """Search across all entities in the knowledge base."""

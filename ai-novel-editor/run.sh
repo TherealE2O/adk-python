@@ -7,7 +7,7 @@ echo "🚀 Starting AI Novel Editor..."
 # Check if virtual environment exists
 if [ ! -d "venv" ]; then
   echo "📦 Creating virtual environment..."
-  python3 -m venv venv
+  python -m venv venv
 fi
 
 # Activate virtual environment

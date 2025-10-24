@@ -1,0 +1,200 @@
+{
+  "id": "proj_1761242441.168614",
+  "title": "peace of our time ",
+  "description": "peace ",
+  "author": "osas",
+  "genre": "action fantasy ",
+  "truth": {
+    "characters": {
+      "char_1761242612.097586": {
+        "id": "char_1761242612.097586",
+        "name": "General",
+        "description": "The commanding officer leading the group of fighters.",
+        "traits": [
+          "Leader",
+          "Strategic"
+        ],
+        "backstory": "",
+        "motivations": [],
+        "relationships": {},
+        "physical_description": "",
+        "role": "Commander of the rebellion",
+        "metadata": {}
+      },
+      "char_1761242612.097677": {
+        "id": "char_1761242612.097677",
+        "name": "Fighters",
+        "description": "A group of ten combat-skilled individuals working under the General.",
+        "traits": [
+          "Skilled in combat",
+          "Rebellious"
+        ],
+        "backstory": "",
+        "motivations": [],
+        "relationships": {},
+        "physical_description": "",
+        "role": "Agents of rebellion",
+        "metadata": {}
+      }
+    },
+    "plot_events": {
+      "event_1761242612.097714": {
+        "id": "event_1761242612.097714",
+        "title": "Attempt to Bring Down the Empire",
+        "description": "The General and the group of fighters are actively engaged in a mission to dismantle the ruling empire.",
+        "timestamp": null,
+        "characters_involved": [],
+        "location": null,
+        "significance": "The primary objective and central conflict of the narrative.",
+        "order": 0,
+        "metadata": {}
+      }
+    },
+    "settings": {
+      "setting_1761242612.097787": {
+        "id": "setting_1761242612.097787",
+        "name": "The Empire",
+        "type": "organization",
+        "description": "The powerful, ruling political structure that the protagonists are attempting to overthrow.",
+        "rules": [],
+        "related_characters": [],
+        "related_events": [],
+        "metadata": {}
+      }
+    },
+    "question_tree": {
+      "root_id": "q_1761242605.640808",
+      "nodes": {
+        "q_1761242605.640808": {
+          "id": "q_1761242605.640808",
+          "question": "What is your story about?",
+          "answer": "group of 10 figthers and a general trying to bring down an empire ",
+          "entity_type": "world_building",
+          "status": "answered",
+          "parent_id": null,
+          "children_ids": [
+            "q_1761242617.257495",
+            "q_1761242617.257616",
+            "q_1761242617.257676",
+            "q_1761242622.5503",
+            "q_1761242622.550351",
+            "q_1761242622.550378",
+            "q_1761242622.550401"
+          ],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": "2025-10-23T19:03:25.640749",
+          "metadata": {}
+        },
+        "q_1761242617.257495": {
+          "id": "q_1761242617.257495",
+          "question": "What is the General's personal history with the Empire that fuels this rebellion, and how did they recruit only these specific ten fighters?",
+          "answer": null,
+          "entity_type": "character",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {
+            "related_entity_name": "General"
+          }
+        },
+        "q_1761242617.257616": {
+          "id": "q_1761242617.257616",
+          "question": "What are the primary methods (military, magical, economic) the Empire uses to maintain absolute control, and how does this oppression manifest in the daily lives of its citizens?",
+          "answer": null,
+          "entity_type": "world_building",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1761242617.257676": {
+          "id": "q_1761242617.257676",
+          "question": "What is the immediate, high-stakes target of the group's current mission, and what specific resource or asset are they hoping to gain by attacking it?",
+          "answer": null,
+          "entity_type": "plot_event",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {
+            "related_entity_name": "Attempt to Bring Down the Empire"
+          }
+        },
+        "q_1761242622.5503": {
+          "id": "q_1761242622.5503",
+          "question": "What is the General's personal history with the Empire, and what specific event triggered their decision to lead this seemingly impossible rebellion?",
+          "answer": null,
+          "entity_type": "character",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {
+            "related_entity_name": "General"
+          }
+        },
+        "q_1761242622.550351": {
+          "id": "q_1761242622.550351",
+          "question": "Given the small size of the group (11 people), what is the specific, high-value target or structural weakness within the Empire that their mission is focused on exploiting?",
+          "answer": null,
+          "entity_type": "plot_event",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {
+            "related_entity_name": "Attempt to Bring Down the Empire"
+          }
+        },
+        "q_1761242622.550378": {
+          "id": "q_1761242622.550378",
+          "question": "Beyond being 'fighters,' what specialized roles or unique abilities (e.g., magic, technology, espionage) do the 10 individuals possess that make them indispensable to the General's plan?",
+          "answer": null,
+          "entity_type": "character",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {
+            "related_entity_name": "Fighters"
+          }
+        },
+        "q_1761242622.550401": {
+          "id": "q_1761242622.550401",
+          "question": "What is the primary source of the Empire's power (e.g., military might, technological control, religious dogma), and how does this power manifest in the daily lives of its citizens?",
+          "answer": null,
+          "entity_type": "world_building",
+          "status": "pending",
+          "parent_id": "q_1761242605.640808",
+          "children_ids": [],
+          "related_entity_ids": [],
+          "entity_id": null,
+          "answered_at": null,
+          "metadata": {}
+        }
+      },
+      "current_node_id": null
+    },
+    "created_at": "2025-10-23T19:00:41.168546",
+    "updated_at": "2025-10-23T19:03:32.097814"
+  },
+  "chapters": {},
+  "created_at": "2025-10-23T19:00:41.168635",
+  "updated_at": "2025-10-23T19:00:41.168636",
+  "is_example": false
+}

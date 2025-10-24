@@ -21,10 +21,14 @@ class Chapter(BaseModel):
   updated_at: datetime = Field(default_factory=datetime.now)
   word_count: int = 0
   
+  def update_word_count(self) -> None:
+    """Update the word count based on current content."""
+    self.word_count = len(self.content.split()) if self.content else 0
+  
   def update_content(self, new_content: str) -> None:
     """Update the chapter content and metadata."""
     self.content = new_content
-    self.word_count = len(new_content.split())
+    self.update_word_count()
     self.updated_at = datetime.now()
 
 

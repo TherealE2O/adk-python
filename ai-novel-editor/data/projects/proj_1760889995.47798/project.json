@@ -1,0 +1,180 @@
+{
+  "id": "proj_1760889995.47798",
+  "title": "poot end of a war",
+  "description": " he only way to win",
+  "author": "osas",
+  "genre": "action fantasy",
+  "truth": {
+    "characters": {},
+    "plot_events": {
+      "event_1760890571.294911": {
+        "id": "event_1760890571.294911",
+        "title": "Profic Land King's Supremacy",
+        "description": "The Profic Land King is considered the true king, with all others paying tribute to him. No other king can be acknowledged without his blessing.",
+        "timestamp": null,
+        "characters_involved": [],
+        "location": null,
+        "significance": "Establishes a clear hierarchy of power, where the Profic Land King holds ultimate authority and legitimacy. This creates potential for conflict or political maneuvering as other rulers seek his favor or challenge his dominance.",
+        "order": 0,
+        "metadata": {}
+      }
+    },
+    "settings": {},
+    "question_tree": {
+      "root_id": "q_1760890404.242569",
+      "nodes": {
+        "q_1760890404.242569": {
+          "id": "q_1760890404.242569",
+          "question": "What is your story about?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": null,
+          "children_ids": [
+            "q_1760890406.792322",
+            "q_1760890406.792505",
+            "q_1760890406.792587",
+            "q_1760890406.792653",
+            "q_1760890406.792716"
+          ],
+          "status": "answered",
+          "answer": "it about 2 kingdom that goes into war because the king brother falls in love and kill the daughter of an influencer duke so knowng he has done wrong gose to his brother who uses this as an opportunity to attack profic land which his eye has been on for a long time ",
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890406.792322": {
+          "id": "q_1760890406.792322",
+          "question": "What specific qualities about the \"profic land\" make it so desirable to the attacking king?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890404.242569",
+          "children_ids": [
+            "q_1760890573.596322",
+            "q_1760890573.596427",
+            "q_1760890573.596488",
+            "q_1760890573.596552",
+            "q_1760890573.596606"
+          ],
+          "status": "answered",
+          "answer": "profic land king is the true king a every other person pays him tribute he must bless any other king to be acknowledge ",
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890406.792505": {
+          "id": "q_1760890406.792505",
+          "question": "What is the nature of the influencer duke's power and influence within his kingdom, and how does it impact the war?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890404.242569",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890406.792587": {
+          "id": "q_1760890406.792587",
+          "question": "Beyond his love for the duke's daughter, what other internal conflicts or motivations drive the king's brother to commit murder and seek his sibling's help?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890404.242569",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890406.792653": {
+          "id": "q_1760890406.792653",
+          "question": "How do the people of both kingdoms react to the king's justification for war, especially considering the initial crime was a personal matter?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890404.242569",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890406.792716": {
+          "id": "q_1760890406.792716",
+          "question": "What are the cultural or societal norms surrounding love, marriage, and familial loyalty in these kingdoms, and how do they contribute to the conflict's escalation?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890404.242569",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890573.596322": {
+          "id": "q_1760890573.596322",
+          "question": "What specific rituals or tests does the profic land king employ to determine worthiness for blessing another king's rule, and how have those changed over time?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890406.792322",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890573.596427": {
+          "id": "q_1760890573.596427",
+          "question": "How does the \"profic land\" maintain its power and authority, preventing other kingdoms from challenging its right to demand tribute or confer legitimacy?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890406.792322",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890573.596488": {
+          "id": "q_1760890573.596488",
+          "question": "What happens to kingdoms or rulers who refuse to pay tribute or seek the profic land king's blessing, and what are the consequences for their people?",
+          "entity_type": "character",
+          "entity_id": null,
+          "parent_id": "q_1760890406.792322",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890573.596552": {
+          "id": "q_1760890573.596552",
+          "question": "Beyond the desire for legitimacy, what personal motivations or fears drive the attacking king to seek the profic land king's blessing, considering he's already undertaking a military campaign?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": "q_1760890406.792322",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        },
+        "q_1760890573.596606": {
+          "id": "q_1760890573.596606",
+          "question": "Are there factions or individuals within the profic land who disagree with the system of tribute and blessings, and how might they impact the attacking king's efforts?",
+          "entity_type": "character",
+          "entity_id": null,
+          "parent_id": "q_1760890406.792322",
+          "children_ids": [],
+          "status": "pending",
+          "answer": null,
+          "answered_at": null,
+          "metadata": {}
+        }
+      },
+      "current_node_id": null
+    },
+    "created_at": "2025-10-19T17:06:35.477900",
+    "updated_at": "2025-10-19T17:16:11.294988"
+  },
+  "chapters": {},
+  "created_at": "2025-10-19T17:06:35.478004",
+  "updated_at": "2025-10-19T17:06:35.478005",
+  "is_example": false
+}

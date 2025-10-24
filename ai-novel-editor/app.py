@@ -18,6 +18,17 @@ from src.models.project import Project, Chapter
 from src.models.truth import QuestionNode
 from src.ui.mindmap import render_mindmap, get_mindmap_legend, AGRAPH_AVAILABLE
 from src.ui.audio_input import universal_text_input
+from src.ui.truth_viewers import (
+    render_character_viewer,
+    render_timeline_viewer,
+    render_settings_viewer,
+    render_global_search
+)
+from src.ui.truth_editors import (
+    render_character_editor,
+    render_plot_event_editor,
+    render_setting_editor
+)
 
 # Load environment variables
 load_dotenv()
@@ -67,6 +78,10 @@ if 'listening' not in st.session_state:
   st.session_state.listening = False
 if 'audio_mode' not in st.session_state:
   st.session_state.audio_mode = 'text'  # 'text', 'upload', 'record'
+if 'last_save_time' not in st.session_state:
+  st.session_state.last_save_time = None
+if 'auto_save_enabled' not in st.session_state:
+  st.session_state.auto_save_enabled = True
 
 
 def show_project_manager():
@@ -91,23 +106,50 @@ def show_project_manager():
           col_a, col_b = st.columns(2)
           with col_a:
             if st.button(f"Open", key=f"open_{project.id}"):
-              st.session_state.current_project = project
-              project_manager.current_project = project
-              st.session_state.worldbuilding_agent = WorldBuildingAgent(
-                  project.truth,
-                  st.session_state.llm_service
-              )
-              st.session_state.editing_agent = EditingAgent(
-                  project.truth,
-                  st.session_state.llm_service
-              )
-              st.session_state.current_page = 'editor'
-              st.rerun()
+              try:
+                st.session_state.current_project = project
+                project_manager.current_project = project
+                st.session_state.worldbuilding_agent = WorldBuildingAgent(
+                    project.truth,
+                    st.session_state.llm_service
+                )
+                st.session_state.editing_agent = EditingAgent(
+                    project.truth,
+                    st.session_state.llm_service
+                )
+                st.session_state.current_page = 'editor'
+                st.rerun()
+              except Exception as e:
+                st.error(f"❌ Failed to open project: {str(e)}")
           
           with col_b:
-            if st.button(f"Delete", key=f"delete_{project.id}"):
-              project_manager.delete_project(project.id)
-              st.rerun()
+            # Use a confirmation dialog for delete
+            delete_key = f"confirm_delete_{project.id}"
+            if delete_key not in st.session_state:
+              st.session_state[delete_key] = False
+            
+            if not st.session_state[delete_key]:
+              if st.button(f"Delete", key=f"delete_{project.id}"):
+                st.session_state[delete_key] = True
+                st.rerun()
+            else:
+              st.warning(f"⚠️ Delete '{project.title}'?")
+              col_yes, col_no = st.columns(2)
+              with col_yes:
+                if st.button("✓ Yes", key=f"yes_{project.id}"):
+                  try:
+                    if project_manager.delete_project(project.id):
+                      st.toast("✅ Project deleted successfully!", icon="✅")
+                      st.session_state[delete_key] = False
+                      st.rerun()
+                    else:
+                      st.error("❌ Project not found")
+                  except Exception as e:
+                    st.error(f"❌ Failed to delete project: {str(e)}")
+              with col_no:
+                if st.button("✗ No", key=f"no_{project.id}"):
+                  st.session_state[delete_key] = False
+                  st.rerun()
     else:
       st.info("No projects yet. Create your first project!")
   
@@ -220,8 +262,11 @@ def show_worldbuilding():
   else:
     st.info("💡 Set GOOGLE_API_KEY in .env to enable audio input everywhere")
   
+  # Check if coming from editor (has chapters)
+  coming_from_editor = len(project.chapters) > 0
+  
   # Initialize question tree if not exists
-  if not agent.question_tree:
+  if not agent.truth.question_tree:
     st.subheader("Let's start building your story!")
     
     initial_question = "What is your story about?"
@@ -239,26 +284,46 @@ def show_worldbuilding():
     
     if st.button("Start World Building", type="primary"):
       if initial_answer:
-        agent.initialize_question_tree(initial_answer)
-        agent.generate_follow_up_questions(
-            initial_answer,
-            agent.question_tree.root_id
-        )
-        project_manager.save_current_project()
-        # Clear transcript
-        if 'transcript_initial_story_answer' in st.session_state:
-          del st.session_state['transcript_initial_story_answer']
-        st.success("Question tree initialized!")
-        st.rerun()
+        progress_bar = st.progress(0, text="Initializing world-building...")
+        try:
+          progress_bar.progress(20, text="Analyzing your story...")
+          agent.initialize_question_tree(initial_answer)
+          
+          progress_bar.progress(60, text="Generating follow-up questions...")
+          agent.generate_follow_up_questions(
+              initial_answer,
+              agent.truth.question_tree.root_id
+          )
+          
+          progress_bar.progress(90, text="Saving project...")
+          project_manager.save_current_project()
+          
+          progress_bar.progress(100, text="Complete!")
+          
+          # Clear transcript
+          if 'transcript_initial_story_answer' in st.session_state:
+            del st.session_state['transcript_initial_story_answer']
+          st.toast("✅ Question tree initialized!", icon="✅")
+          st.rerun()
+        except Exception as e:
+          progress_bar.empty()
+          error_msg = st.session_state.llm_service.get_error_message(e)
+          st.error(f"❌ Failed to initialize world-building: {error_msg}")
+          if st.button("🔄 Retry Initialization", key="retry_init"):
+            st.rerun()
       else:
         st.error("Please provide an answer to get started.")
   else:
     # Show question tree visualization
-    st.subheader("Question Tree Navigation")
+    if coming_from_editor:
+      st.subheader("Continue building your story's Truth")
+      st.info("💡 Answer more questions to expand your world and deepen your story's foundation")
+    else:
+      st.subheader("Question Tree Navigation")
     
     # Display current questions
-    pending_questions = agent.question_tree.get_pending_questions()
-    answered_questions = agent.question_tree.get_answered_questions()
+    pending_questions = agent.truth.question_tree.get_pending_questions()
+    answered_questions = agent.truth.question_tree.get_answered_questions()
     
     # Visual tree representation
     st.markdown("### 📊 Question Tree Structure")
@@ -282,11 +347,11 @@ def show_worldbuilding():
       st.markdown(get_mindmap_legend(), unsafe_allow_html=True)
       
       # Render the mind map
-      selected_node_id = render_mindmap(agent.question_tree)
+      selected_node_id = render_mindmap(agent.truth.question_tree)
       
       # If a node was clicked, navigate to it
       if selected_node_id:
-        selected_node = agent.question_tree.get_node(selected_node_id)
+        selected_node = agent.truth.question_tree.get_node(selected_node_id)
         if selected_node and selected_node.status.value == 'pending':
           st.session_state.selected_question_id = selected_node_id
           st.info(f"Selected: {selected_node.question}")
@@ -304,7 +369,7 @@ def show_worldbuilding():
       }
       
       # Categorize all questions
-      for node in agent.question_tree.nodes.values():
+      for node in agent.truth.question_tree.nodes.values():
         entity_type = node.entity_type.value
         if entity_type in categories:
           categories[entity_type]['questions'].append(node)
@@ -330,7 +395,7 @@ def show_worldbuilding():
       # Show questions in order they were created/answered
       st.markdown("#### Question Timeline")
       
-      all_nodes = list(agent.question_tree.nodes.values())
+      all_nodes = list(agent.truth.question_tree.nodes.values())
       # Sort by creation (using ID as proxy for creation order)
       all_nodes.sort(key=lambda n: n.id)
       
@@ -360,7 +425,7 @@ def show_worldbuilding():
       # Create expandable tree view
       def render_tree_node(node_id: str, level: int = 0):
         """Recursively render tree nodes."""
-        node = agent.question_tree.get_node(node_id)
+        node = agent.truth.question_tree.get_node(node_id)
         if not node:
           return
         
@@ -406,8 +471,8 @@ def show_worldbuilding():
               render_tree_node(child_id, level + 1)
     
       # Render the tree starting from root
-      if agent.question_tree.root_id:
-        render_tree_node(agent.question_tree.root_id)
+      if agent.truth.question_tree.root_id:
+        render_tree_node(agent.truth.question_tree.root_id)
     
     st.divider()
     
@@ -444,17 +509,17 @@ def show_worldbuilding():
           del st.session_state.selected_question_id
         
         if selected_q_id:
-          selected_node = agent.question_tree.get_node(selected_q_id)
+          selected_node = agent.truth.question_tree.get_node(selected_q_id)
           
           # Show breadcrumb navigation (path from root to current question)
           def get_path_to_node(node_id: str) -> list[QuestionNode]:
             """Get the path from root to a specific node."""
             path = []
-            current = agent.question_tree.get_node(node_id)
+            current = agent.truth.question_tree.get_node(node_id)
             while current:
               path.insert(0, current)
               if current.parent_id:
-                current = agent.question_tree.get_node(current.parent_id)
+                current = agent.truth.question_tree.get_node(current.parent_id)
               else:
                 break
             return path
@@ -478,14 +543,27 @@ def show_worldbuilding():
           
           if st.button("Submit Answer", key=f"submit_{selected_q_id}", type="primary"):
             if answer:
-              new_questions = agent.answer_question(selected_q_id, answer)
-              project_manager.save_current_project()
-              
-              st.success(
-                  f"✅ Answer recorded! Generated {len(new_questions)} "
-                  "follow-up questions."
-              )
-              st.rerun()
+              progress_bar = st.progress(0, text="Processing your answer...")
+              try:
+                progress_bar.progress(30, text="Extracting entities from your answer...")
+                new_questions = agent.answer_question(selected_q_id, answer)
+                
+                progress_bar.progress(80, text="Saving project...")
+                project_manager.save_current_project()
+                
+                progress_bar.progress(100, text="Complete!")
+                
+                st.toast(
+                    f"✅ Answer recorded! Generated {len(new_questions)} follow-up questions.",
+                    icon="✅"
+                )
+                st.rerun()
+              except Exception as e:
+                progress_bar.empty()
+                error_msg = st.session_state.llm_service.get_error_message(e)
+                st.error(f"❌ Failed to process answer: {error_msg}")
+                if st.button("🔄 Retry Submit", key=f"retry_submit_{selected_q_id}"):
+                  st.rerun()
             else:
               st.error("Please provide an answer.")
       else:
@@ -493,18 +571,28 @@ def show_worldbuilding():
     
     with col2:
       st.subheader("Progress")
-      total = len(agent.question_tree.nodes)
+      total = len(agent.truth.question_tree.nodes)
       answered = len(answered_questions)
       progress = answered / total if total > 0 else 0
       st.progress(progress)
       st.write(f"{answered}/{total} questions answered")
       
-      if st.button("🚀 Start Writing", type="primary"):
+      # Change button text based on whether coming from editor
+      button_text = "🚀 Return to Editor" if coming_from_editor else "🚀 Start Writing"
+      if st.button(button_text, type="primary"):
+        # Save project before returning
+        try:
+          project_manager.save_current_project()
+        except Exception as e:
+          st.error(f"Failed to save project: {str(e)}")
+        
         st.session_state.current_page = 'editor'
-        st.session_state.editing_agent = EditingAgent(
-            project.truth,
-            st.session_state.llm_service
-        )
+        # Ensure editing agent is initialized
+        if not st.session_state.editing_agent:
+          st.session_state.editing_agent = EditingAgent(
+              project.truth,
+              st.session_state.llm_service
+          )
         st.rerun()
 
 
@@ -521,6 +609,18 @@ def show_editor():
   # Sidebar for navigation
   with st.sidebar:
     st.header(f"📖 {project.title}")
+    
+    # Auto-save indicator
+    if st.session_state.last_save_time:
+      import datetime
+      time_diff = datetime.datetime.now() - st.session_state.last_save_time
+      if time_diff.total_seconds() < 5:
+        st.success("💾 Auto-saved just now")
+      elif time_diff.total_seconds() < 60:
+        st.info(f"💾 Last saved {int(time_diff.total_seconds())}s ago")
+      else:
+        minutes = int(time_diff.total_seconds() / 60)
+        st.info(f"💾 Last saved {minutes}m ago")
     
     if st.button("← Back to Projects"):
       st.session_state.current_page = 'project_manager'
@@ -566,13 +666,45 @@ def show_editor():
     
     st.divider()
     
+    # World-building navigation
+    if st.button("🌍 Continue World-Building", help="Answer more questions to expand your Truth"):
+      # Save current project before navigation
+      try:
+        project_manager.save_current_project()
+      except Exception as e:
+        st.error(f"Failed to save project: {str(e)}")
+      st.session_state.current_page = 'worldbuilding'
+      st.rerun()
+    
+    st.divider()
+    
     # Truth viewers
+    st.subheader("Truth Viewers")
     if st.button("👥 View Characters"):
       st.session_state.show_truth_viewer = 'characters'
     if st.button("📅 View Timeline"):
       st.session_state.show_truth_viewer = 'timeline'
     if st.button("🗺️ View Settings"):
       st.session_state.show_truth_viewer = 'settings'
+    if st.button("🔍 Search Truth"):
+      st.session_state.show_truth_viewer = 'search'
+    
+    st.divider()
+    
+    # Create Truth Entity section
+    st.subheader("Create Truth Entity")
+    if st.button("➕ New Character"):
+      st.session_state.show_truth_editor = 'character'
+      st.session_state.editor_entity_id = None
+      st.rerun()
+    if st.button("➕ New Event"):
+      st.session_state.show_truth_editor = 'event'
+      st.session_state.editor_entity_id = None
+      st.rerun()
+    if st.button("➕ New Setting"):
+      st.session_state.show_truth_editor = 'setting'
+      st.session_state.editor_entity_id = None
+      st.rerun()
   
   # Main editor area
   if st.session_state.current_chapter_id:
@@ -592,9 +724,22 @@ def show_editor():
           default_value=chapter.content
       )
       
-      if st.button("💾 Save Chapter"):
-        project_manager.update_chapter_content(chapter.id, content)
-        st.success("Chapter saved!")
+      col_save1, col_save2 = st.columns([3, 1])
+      with col_save1:
+        if st.button("💾 Save Chapter", use_container_width=True):
+          try:
+            project_manager.update_chapter_content(chapter.id, content)
+            import datetime
+            st.session_state.last_save_time = datetime.datetime.now()
+            st.toast("✅ Chapter saved successfully!", icon="✅")
+          except Exception as e:
+            st.error(f"❌ Failed to save chapter: {str(e)}")
+            st.info("💡 Your changes are still in memory. Try saving again or check the logs.")
+      
+      with col_save2:
+        # Auto-save toggle
+        auto_save = st.checkbox("Auto-save", value=st.session_state.auto_save_enabled, key="auto_save_toggle")
+        st.session_state.auto_save_enabled = auto_save
       
       # AI editing tools
       st.subheader("AI Editing Tools")
@@ -619,52 +764,80 @@ def show_editor():
       
       with col1:
         if st.button("✨ Improve", disabled=not st.session_state.llm_service.is_available()):
-          with st.spinner("Improving text..."):
-            text_to_improve = selected_text if selected_text else content
-            all_chapters = project.get_sorted_chapters()
-            result = st.session_state.editing_agent.improve_text(
-                text_to_improve,
-                chapter,
-                all_chapters
-            )
-            st.session_state.ai_result = result
-            st.rerun()
+          with st.spinner("Improving text... (this may take a moment)"):
+            try:
+              text_to_improve = selected_text if selected_text else content
+              all_chapters = project.get_sorted_chapters()
+              result = st.session_state.editing_agent.improve_text(
+                  text_to_improve,
+                  chapter,
+                  all_chapters
+              )
+              st.session_state.ai_result = result
+              st.toast("✅ Text improved successfully!", icon="✅")
+              st.rerun()
+            except Exception as e:
+              error_msg = st.session_state.llm_service.get_error_message(e)
+              st.error(f"❌ {error_msg}")
+              if st.button("🔄 Retry Improve", key="retry_improve"):
+                st.rerun()
       
       with col2:
         if st.button("📝 Expand", disabled=not st.session_state.llm_service.is_available()):
-          with st.spinner("Expanding text..."):
-            text_to_expand = selected_text if selected_text else content
-            all_chapters = project.get_sorted_chapters()
-            result = st.session_state.editing_agent.expand_text(
-                text_to_expand,
-                chapter,
-                all_chapters
-            )
-            st.session_state.ai_result = result
-            st.rerun()
+          with st.spinner("Expanding text... (this may take a moment)"):
+            try:
+              text_to_expand = selected_text if selected_text else content
+              all_chapters = project.get_sorted_chapters()
+              result = st.session_state.editing_agent.expand_text(
+                  text_to_expand,
+                  chapter,
+                  all_chapters
+              )
+              st.session_state.ai_result = result
+              st.toast("✅ Text expanded successfully!", icon="✅")
+              st.rerun()
+            except Exception as e:
+              error_msg = st.session_state.llm_service.get_error_message(e)
+              st.error(f"❌ {error_msg}")
+              if st.button("🔄 Retry Expand", key="retry_expand"):
+                st.rerun()
       
       with col3:
         if st.button("🔄 Rephrase", disabled=not st.session_state.llm_service.is_available()):
-          with st.spinner("Rephrasing text..."):
-            text_to_rephrase = selected_text if selected_text else content
-            all_chapters = project.get_sorted_chapters()
-            result = st.session_state.editing_agent.rephrase_text(
-                text_to_rephrase,
-                chapter,
-                all_chapters
-            )
-            st.session_state.ai_result = result
-            st.rerun()
+          with st.spinner("Rephrasing text... (this may take a moment)"):
+            try:
+              text_to_rephrase = selected_text if selected_text else content
+              all_chapters = project.get_sorted_chapters()
+              result = st.session_state.editing_agent.rephrase_text(
+                  text_to_rephrase,
+                  chapter,
+                  all_chapters
+              )
+              st.session_state.ai_result = result
+              st.toast("✅ Text rephrased successfully!", icon="✅")
+              st.rerun()
+            except Exception as e:
+              error_msg = st.session_state.llm_service.get_error_message(e)
+              st.error(f"❌ {error_msg}")
+              if st.button("🔄 Retry Rephrase", key="retry_rephrase"):
+                st.rerun()
       
       with col4:
         if st.button("💡 Suggest Next", disabled=not st.session_state.llm_service.is_available()):
-          with st.spinner("Generating suggestion..."):
-            all_chapters = project.get_sorted_chapters()
-            result = st.session_state.editing_agent.suggest_next_chapter(
-                all_chapters
-            )
-            st.session_state.ai_result = result
-            st.rerun()
+          with st.spinner("Generating suggestion... (this may take a moment)"):
+            try:
+              all_chapters = project.get_sorted_chapters()
+              result = st.session_state.editing_agent.suggest_next_chapter(
+                  all_chapters
+              )
+              st.session_state.ai_result = result
+              st.toast("✅ Suggestion generated successfully!", icon="✅")
+              st.rerun()
+            except Exception as e:
+              error_msg = st.session_state.llm_service.get_error_message(e)
+              st.error(f"❌ {error_msg}")
+              if st.button("🔄 Retry Suggest", key="retry_suggest"):
+                st.rerun()
       
       # Display AI result
       if st.session_state.ai_result:
@@ -674,22 +847,29 @@ def show_editor():
         col_a, col_b = st.columns(2)
         with col_a:
           if st.button("✅ Use This"):
-            if selected_text and selected_text in content:
-              # Replace selected text
-              new_content = content.replace(selected_text, st.session_state.ai_result)
-              project_manager.update_chapter_content(chapter.id, new_content)
-            else:
-              # Append to chapter
-              new_content = content + "\n\n" + st.session_state.ai_result
-              project_manager.update_chapter_content(chapter.id, new_content)
-            st.session_state.ai_result = None
-            st.session_state.selected_text = ""
-            st.success("Applied AI suggestion!")
-            st.rerun()
+            try:
+              if selected_text and selected_text in content:
+                # Replace selected text
+                new_content = content.replace(selected_text, st.session_state.ai_result)
+                project_manager.update_chapter_content(chapter.id, new_content)
+              else:
+                # Append to chapter
+                new_content = content + "\n\n" + st.session_state.ai_result
+                project_manager.update_chapter_content(chapter.id, new_content)
+              
+              import datetime
+              st.session_state.last_save_time = datetime.datetime.now()
+              st.session_state.ai_result = None
+              st.session_state.selected_text = ""
+              st.toast("✅ Applied AI suggestion!", icon="✅")
+              st.rerun()
+            except Exception as e:
+              st.error(f"❌ Failed to apply suggestion: {str(e)}")
         
         with col_b:
           if st.button("❌ Discard"):
             st.session_state.ai_result = None
+            st.toast("Suggestion discarded", icon="ℹ️")
             st.rerun()
   else:
     st.info("Select or create a chapter to start writing.")
@@ -698,32 +878,123 @@ def show_editor():
   if 'show_truth_viewer' in st.session_state:
     viewer_type = st.session_state.show_truth_viewer
     
+    st.divider()
+    
+    # Close button
+    if st.button("✖ Close Viewer"):
+      del st.session_state.show_truth_viewer
+      if 'selected_entity_id' in st.session_state:
+        del st.session_state.selected_entity_id
+      st.rerun()
+    
     if viewer_type == 'characters':
-      st.subheader("👥 Characters")
-      for char in project.truth.characters.values():
-        with st.expander(f"{char.name}"):
-          st.write(f"**Description:** {char.description}")
-          if char.traits:
-            st.write(f"**Traits:** {', '.join(char.traits)}")
-          if char.backstory:
-            st.write(f"**Backstory:** {char.backstory}")
+      render_character_viewer(project)
     
     elif viewer_type == 'timeline':
-      st.subheader("📅 Timeline")
-      events = sorted(
-          project.truth.plot_events.values(),
-          key=lambda e: e.order
-      )
-      for event in events:
-        with st.expander(f"{event.title}"):
-          st.write(event.description)
+      render_timeline_viewer(project)
     
     elif viewer_type == 'settings':
-      st.subheader("🗺️ Settings & World-Building")
-      for setting in project.truth.settings.values():
-        with st.expander(f"{setting.name}"):
-          st.write(f"**Type:** {setting.type}")
-          st.write(f"**Description:** {setting.description}")
+      render_settings_viewer(project)
+    
+    elif viewer_type == 'search':
+      render_global_search(project)
+  
+  # Truth editor modal
+  if 'show_truth_editor' in st.session_state:
+    editor_type = st.session_state.show_truth_editor
+    entity_id = st.session_state.get('editor_entity_id')
+    
+    st.divider()
+    
+    # Close button
+    if st.button("✖ Close Editor"):
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+      st.rerun()
+    
+    # Define save and delete callbacks
+    def save_character(character):
+      if entity_id:
+        project.truth.update_character(entity_id, character)
+      else:
+        project.truth.add_character(character)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    def delete_character(char_id):
+      project.truth.delete_character(char_id)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    def save_plot_event(event):
+      if entity_id:
+        project.truth.update_plot_event(entity_id, event)
+      else:
+        project.truth.add_plot_event(event)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    def delete_plot_event(event_id):
+      project.truth.delete_plot_event(event_id)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    def save_setting(setting):
+      if entity_id:
+        project.truth.update_setting(entity_id, setting)
+      else:
+        project.truth.add_setting(setting)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    def delete_setting(setting_id):
+      project.truth.delete_setting(setting_id)
+      project_manager.save_current_project()
+      del st.session_state.show_truth_editor
+      if 'editor_entity_id' in st.session_state:
+        del st.session_state.editor_entity_id
+    
+    # Render appropriate editor
+    if editor_type == 'character':
+      render_character_editor(
+          character_id=entity_id,
+          characters=project.truth.characters,
+          audio_service=st.session_state.audio_service,
+          on_save=save_character,
+          on_delete=delete_character if entity_id else None
+      )
+    
+    elif editor_type == 'event':
+      render_plot_event_editor(
+          event_id=entity_id,
+          plot_events=project.truth.plot_events,
+          characters=project.truth.characters,
+          audio_service=st.session_state.audio_service,
+          on_save=save_plot_event,
+          on_delete=delete_plot_event if entity_id else None
+      )
+    
+    elif editor_type == 'setting':
+      render_setting_editor(
+          setting_id=entity_id,
+          settings=project.truth.settings,
+          characters=project.truth.characters,
+          plot_events=project.truth.plot_events,
+          audio_service=st.session_state.audio_service,
+          on_save=save_setting,
+          on_delete=delete_setting if entity_id else None
+      )
 
 
 # Main app routing

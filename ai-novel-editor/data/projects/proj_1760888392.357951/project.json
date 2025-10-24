@@ -1,0 +1,47 @@
+{
+  "id": "proj_1760888392.357951",
+  "title": "peace of our time end of a war",
+  "description": "the only way to win ",
+  "author": "osas",
+  "genre": "action fantasy ",
+  "truth": {
+    "characters": {},
+    "plot_events": {},
+    "settings": {},
+    "question_tree": {
+      "root_id": "q_1760888522.245147",
+      "nodes": {
+        "q_1760888522.245147": {
+          "id": "q_1760888522.245147",
+          "question": "What is your story about?",
+          "entity_type": "plot_event",
+          "entity_id": null,
+          "parent_id": null,
+          "children_ids": [],
+          "status": "answered",
+          "answer": "it about two kingdom who goes to war because of a love miss understanding with the king younger bother and a duke",
+          "answered_at": null,
+          "metadata": {}
+        }
+      },
+      "current_node_id": null
+    },
+    "created_at": "2025-10-19T16:39:52.357699",
+    "updated_at": "2025-10-19T16:39:52.357769"
+  },
+  "chapters": {
+    "chapter_1760889552.83221": {
+      "id": "chapter_1760889552.83221",
+      "number": 1,
+      "title": "i don't love you ",
+      "content": "",
+      "outline": "",
+      "created_at": "2025-10-19T16:59:12.856359",
+      "updated_at": "2025-10-19T16:59:12.856377",
+      "word_count": 0
+    }
+  },
+  "created_at": "2025-10-19T16:39:52.358025",
+  "updated_at": "2025-10-19T16:59:12.874739",
+  "is_example": false
+}

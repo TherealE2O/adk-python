@@ -89,7 +89,7 @@ def create_mindmap_visualization(question_tree: QuestionTree) -> tuple[list, lis
       edges.append(
           Edge(
               source=node.id,
-              to=child_id,
+              target=child_id,
               type="CURVE_SMOOTH",
           )
       )
